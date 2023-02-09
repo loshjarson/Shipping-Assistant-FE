@@ -1,10 +1,10 @@
 import './App.css';
 import { useState } from 'react';
-import { TextField, Select, MenuItem} from '@mui/material';
+import { TextField, Select, MenuItem, Checkbox, FormControlLabel, Button} from '@mui/material';
 
 
 
-const initialState = {
+const initialFormState = {
   Mare_Owner: "",
   Mare_Phone: "",
   Mare_Email: "",
@@ -32,21 +32,60 @@ const initialState = {
   Billing_Address_3: "",
 }
 
-function App() {
-  const [form, setForm] = useState(initialState);
+const formsToCreate = {
+  Shipment_Request: true,
+  PTouch_Label: true,
+  Shipping_Label: true,
+}
 
-  const handleChange = (event) => {
+function App() {
+  const [form, setForm] = useState(initialFormState);
+  const [toCreate, setToCreate] = useState(formsToCreate);
+
+  const handleFormChange = (event) => {
     let updatedForm = form;
     updatedForm[event.target.id] = event.target.value
     setForm(updatedForm);
   };
+
+  const handleCreateChange = (event) => {
+    let update = toCreate;
+    update[event.target.id] = event.target.value;
+    setToCreate(update);
+  }
 
   return (
     <div className="App">
       <header className="App-header">
         <h1>Shipment Assistant</h1>
       </header>
-      <form>
+      <div>
+        <FormControlLabel
+          label="Shipment Request"
+          control={<Checkbox
+            id='Shipment_Request'
+            checked={toCreate.ShipmentRequest}
+            onChange={handleCreateChange}
+            />}
+        />
+        <FormControlLabel
+          label="PTouch Label"
+          control={<Checkbox
+            id='PTouch_Label'
+            checked={toCreate.PTouch_Label}
+            onChange={handleCreateChange}
+            />}
+        />
+        <FormControlLabel
+          label="Shipping Label"
+          control={<Checkbox
+            id='Shipping_Label'
+            checked={toCreate.Shipping_Label}
+            onChange={handleCreateChange}
+            />}
+        />
+      </div>
+      <div id="form">
         <div className='mare-owner'>
           <h3>Mare Owner Information</h3>
             <div className='info'>
@@ -55,21 +94,21 @@ function App() {
                 id="Mare_Owner"
                 label="Mare Owner Name"
                 value={form.Mare_Owner}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Mare_Phone"
                 label="Mare Owner Phone"
                 value={form.Mare_Phone}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Mare_Email"
                 label="Mare Owner Email"
                 value={form.Mare_Email}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
             </div>
         </div>
@@ -81,34 +120,34 @@ function App() {
                 id="Mare_Name"
                 label="Name"
                 value={form.Mare_Name}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Birth_Year"
                 label="Birth Year"
                 value={form.Birth_Year}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Breed"
                 label="Breed"
                 value={form.Breed}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Registration"
                 label="Registration #"
                 value={form.Registration}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <Select
                 id="Status"
                 value={form.Status}
                 label="Status"
-                onChange={handleChange}
+                onChange={handleFormChange}
               >
                 <MenuItem value={'Maiden'}>Maiden</MenuItem>
                 <MenuItem value={'Foaled'}>Foaled</MenuItem>
@@ -125,14 +164,14 @@ function App() {
                 id="Stallion"
                 label="Stallion"
                 value={form.Stallion}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Stallion_Owner"
                 label="Stallion Owner"
                 value={form.Stallion_Owner}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
             </div>
         </div>
@@ -144,49 +183,49 @@ function App() {
                 id="Recipient"
                 label="Recipient"
                 value={form.Recipient}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Attn"
                 label="Attention"
                 value={form.Attn}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Recipient_Address"
                 label="Recipient Address"
                 value={form.Recipient_Address}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Street_Address"
                 label="Street Address"
                 value={form.Street_Address}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="City"
                 label="City"
                 value={form.City}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="State"
                 label="State"
                 value={form.State}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Zip_Code"
                 label="Zip Code"
                 value={form.Zip_Code}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
             </div>
         </div>
@@ -197,7 +236,7 @@ function App() {
                 id="Status"
                 value={form.Status}
                 label="Status"
-                onChange={handleChange}
+                onChange={handleFormChange}
               >
                 <MenuItem value={'Visa'}>Visa</MenuItem>
                 <MenuItem value={'MC'}>MasterCard</MenuItem>
@@ -207,53 +246,54 @@ function App() {
                 id="Card_Name"
                 label="Recipient"
                 value={form.Card_Name}
-                onChange={handleChange}  
+                onChange={handleFormChange}  
               />
               <TextField
                 required
                 id="Card_Number"
                 label="Attention"
                 value={form.Card_Number}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Security_Code"
                 label="Recipient Address"
                 value={form.Security_Code}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Expiration_Date"
                 label="Street Address"
                 value={form.Expiration_Date}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Billing_Address_1"
                 label="Billing Address 1"
                 value={form.Billing_Address_1}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Billing_Address_2"
                 label="Billing Address 2"
                 value={form.Billing_Address_2}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Billing_Address_3"
                 label="Billing Address 3"
                 value={form.Billing_Address_3}
-                onChange={handleChange}
+                onChange={handleFormChange}
               />
             </div>
         </div>
-      </form>
+        <Button variant="contained">Submit</Button>
+      </div>
     </div>
   );
 }
