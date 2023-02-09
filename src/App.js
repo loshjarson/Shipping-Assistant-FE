@@ -38,20 +38,30 @@ const formsToCreate = {
   Shipping_Label: true,
 }
 
+
 function App() {
   const [form, setForm] = useState(initialFormState);
   const [toCreate, setToCreate] = useState(formsToCreate);
 
+  //handles changes made to normal form inputs
   const handleFormChange = (event) => {
     let updatedForm = form;
     updatedForm[event.target.id] = event.target.value
     setForm(updatedForm);
   };
 
+  //handles changes made to choices of files to create
   const handleCreateChange = (event) => {
     let update = toCreate;
     update[event.target.id] = event.target.value;
     setToCreate(update);
+  }
+
+  //handles submission events. pdf form filling, and shipment label request
+  const onSubmit = (event) => {
+     //if request chosen, fill pdf
+     //if ptouch chosen, check if there is attn. and fill pdf
+     //if shipping label chosen, send request and store response
   }
 
   return (
@@ -292,7 +302,7 @@ function App() {
               />
             </div>
         </div>
-        <Button variant="contained">Submit</Button>
+        <Button variant="contained" onClick={onSubmit}>Submit</Button>
       </div>
     </div>
   );
