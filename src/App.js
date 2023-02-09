@@ -1,4 +1,3 @@
-import logo from './logo.svg';
 import './App.css';
 
 function App() {
@@ -8,7 +7,10 @@ function App() {
         <h1>Shipment Assistant</h1>
       </header>
       <div className='form'>
-        {/*  */}
+        <div className='mare-info'>
+          
+        </div>
+        
       </div>
     </div>
   );
