@@ -5,11 +5,24 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 
+const initialState = {
+  Mare_Owner: "",
+  Mare_Phone: "",
+  Mare_Email: "",
+  Mare_Name: "",
+  Birth_Year: "",
+  Breed: "",
+  Registration: "",
+  Status: "",
+}
+
 function App() {
-  const [age, setAge] = useState('');
+  const [form, setForm] = useState(initialState);
 
   const handleChange = (event) => {
-    setAge(event.target.value);
+    let updatedForm = form;
+    updatedForm[event.target.id] = event.target.value
+    setForm(updatedForm);
   };
 
   return (
@@ -70,8 +83,8 @@ function App() {
               />
               <InputLabel id="status-label">Age</InputLabel>
               <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
+                labelId="status-label"
+                id="Status"
                 value={age}
                 label="Age"
                 onChange={handleChange}
