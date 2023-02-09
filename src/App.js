@@ -81,12 +81,12 @@ function App() {
                 label="Registration #"
                 defaultValue={''}
               />
-              <InputLabel id="status-label">Age</InputLabel>
+              <InputLabel id="status-label">Status</InputLabel>
               <Select
                 labelId="status-label"
                 id="Status"
-                value={age}
-                label="Age"
+                value={""}
+                label="Status"
                 onChange={handleChange}
               >
                 <MenuItem value={'Maiden'}>Maiden</MenuItem>
