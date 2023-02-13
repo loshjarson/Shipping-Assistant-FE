@@ -17,14 +17,7 @@ const initialFormState = {
   Status: "",
   Stallion:"",
   Stallion_Owner:"",
-  Recipient:"",
-  Attn: "",
-  Recipient_Address: "",
-  Street_Address: "",
-  City: "",
-  State: "",
-  Zip_Code: "",
-  Type: "",
+  Shipping_Date: "",
   Card_Name: "",
   Card_Number: "",
   Security_Code: "",
@@ -32,6 +25,16 @@ const initialFormState = {
   Billing_Address_1: "",
   Billing_Address_2: "",
   Billing_Address_3: "",
+}
+
+const addressInitialState = {
+  Recipient:"",
+  Attn: "",
+  Recipient_Address: "",
+  Street_Address: "",
+  City: "",
+  State: "",
+  Zip_Code: "",
 }
 
 const formsToCreate = {
@@ -42,15 +45,22 @@ const formsToCreate = {
 
 
 function App() {
-  const [form, setForm] = useState(initialFormState);
+  const [formState, setFormSState] = useState(initialFormState);
+  const [address, setAddress] = useState(addressInitialState)
   const [toCreate, setToCreate] = useState(formsToCreate);
 
   //handles changes made to normal form inputs
   const handleFormChange = (event) => {
-    let updatedForm = form;
-    updatedForm[event.target.id] = event.target.value
+    let updatedForm = formState;
+    updatedForm[event.target.id] = event.target.value;
     setForm(updatedForm);
   };
+
+  const handleAddressChange = (event) => {
+    let updatedAddress = address;
+    updatedAddress[event.target.id] = event.target.value;
+    setAddress(updatedAddress);
+  }
 
   //handles changes made to choices of files to create
   const handleCreateChange = (event) => {
@@ -72,8 +82,22 @@ function App() {
           const name = field.getName()
           console.log('Field name:', name)
         })
+        Object.keys(formState).forEach(input => {
+          const field = form.getTextField(input)
+          field.setText(formState[input])
+        })
+        const recipient = form.getTextField('Recipient');
+        const address1 = form.getTextField('Recipient_Address_1');
+        const address2 = form.getTextField('Recipient_Address_2');
+        const address3 = form.getTextField('Recipient_Address_3');
 
-
+        recipient.setText(recipient)
+        if(address.Attn.length() > 0){
+          recipient.setText(address.Recipient + " Attn: " + address.Attn)
+          address1.setText(address.Street_Address)
+          address2.setText(address.City + ", " + address.State + " " + address.Zip_Code)
+        }
+        
      }
      //if ptouch chosen, check if there is attn. and fill pdf
      //if shipping label chosen, update excel sheet
@@ -209,49 +233,49 @@ function App() {
                 id="Recipient"
                 label="Recipient"
                 value={form.Recipient}
-                onChange={handleFormChange}
+                onChange={handleAddressChange}
               />
               <TextField
                 required
                 id="Attn"
                 label="Attention"
                 value={form.Attn}
-                onChange={handleFormChange}
+                onChange={handleAddressChange}
               />
               <TextField
                 required
                 id="Recipient_Address"
                 label="Recipient Address"
                 value={form.Recipient_Address}
-                onChange={handleFormChange}
+                onChange={handleAddressChange}
               />
               <TextField
                 required
                 id="Street_Address"
                 label="Street Address"
                 value={form.Street_Address}
-                onChange={handleFormChange}
+                onChange={handleAddressChange}
               />
               <TextField
                 required
                 id="City"
                 label="City"
                 value={form.City}
-                onChange={handleFormChange}
+                onChange={handleAddressChange}
               />
               <TextField
                 required
                 id="State"
                 label="State"
                 value={form.State}
-                onChange={handleFormChange}
+                onChange={handleAddressChange}
               />
               <TextField
                 required
                 id="Zip_Code"
                 label="Zip Code"
                 value={form.Zip_Code}
-                onChange={handleFormChange}
+                onChange={handleAddressChange}
               />
             </div>
         </div>
