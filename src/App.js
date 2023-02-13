@@ -1,6 +1,8 @@
 import './App.css';
 import { useState } from 'react';
 import { TextField, Select, MenuItem, Checkbox, FormControlLabel, Button} from '@mui/material';
+import { PDFDocument } from 'pdf-lib';
+import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf'
 
 
 
@@ -58,9 +60,23 @@ function App() {
   }
 
   //handles submission events. pdf form filling, and shipment label request
-  const onSubmit = (event) => {
-     //if request chosen, fill pdf
+  const onSubmit = async (event) => {
+     //if request chosen, fill request pdf
+     if(toCreate.Shipment_Request) {
+        //selects request file and converts to array buffer for pdf-lib
+        const arrayBuffer = await fetch(requestPDF).then(res => res.arrayBuffer())
+        const pdfDoc = await PDFDocument.load(arrayBuffer);
+        const form = pdfDoc.getForm()
+        const fields = form.getFields()
+        fields.forEach(field => {
+          const name = field.getName()
+          console.log('Field name:', name)
+        })
+
+
+     }
      //if ptouch chosen, check if there is attn. and fill pdf
+     //if shipping label chosen, update excel sheet
      //if shipping label chosen, send request and store response
   }
 
