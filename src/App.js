@@ -5,7 +5,7 @@ import { PDFDocument } from 'pdf-lib';
 import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf'
 
 
-
+//initial for form inputs minus shipping address
 const initialFormState = {
   Mare_Owner: "",
   Mare_Phone: "",
@@ -27,6 +27,7 @@ const initialFormState = {
   Billing_Address_3: "",
 }
 
+//initial state for shipping address
 const addressInitialState = {
   Recipient:"",
   Attn: "",
@@ -37,6 +38,7 @@ const addressInitialState = {
   Zip_Code: "",
 }
 
+//initial state for forms the user wants to create
 const formsToCreate = {
   Shipment_Request: true,
   PTouch_Label: true,
@@ -45,7 +47,7 @@ const formsToCreate = {
 
 
 function App() {
-  const [formState, setFormSState] = useState(initialFormState);
+  const [formState, setFormState] = useState(initialFormState);
   const [address, setAddress] = useState(addressInitialState)
   const [toCreate, setToCreate] = useState(formsToCreate);
 
@@ -53,9 +55,10 @@ function App() {
   const handleFormChange = (event) => {
     let updatedForm = formState;
     updatedForm[event.target.id] = event.target.value;
-    setForm(updatedForm);
+    setFormState(updatedForm);
   };
 
+  //handles changes made to address form inputs
   const handleAddressChange = (event) => {
     let updatedAddress = address;
     updatedAddress[event.target.id] = event.target.value;
@@ -82,10 +85,13 @@ function App() {
           const name = field.getName()
           console.log('Field name:', name)
         })
+        //sets text field to be value of form inputs
         Object.keys(formState).forEach(input => {
           const field = form.getTextField(input)
           field.setText(formState[input])
         })
+
+        //handles setting address text fields to address input values
         const recipient = form.getTextField('Recipient');
         const address1 = form.getTextField('Recipient_Address_1');
         const address2 = form.getTextField('Recipient_Address_2');
