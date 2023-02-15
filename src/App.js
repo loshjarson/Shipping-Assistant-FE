@@ -97,7 +97,6 @@ function App() {
         const address2 = form.getTextField('Recipient_Address_2');
         const address3 = form.getTextField('Recipient_Address_3');
 
-        recipient.setText(recipient)
         if(address.Attn.length() > 0){
           recipient.setText(address.Recipient + " Attn: " + address.Attn)
           address1.setText(address.Street_Address)
