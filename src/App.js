@@ -149,21 +149,21 @@ function App() {
                 required
                 id="Mare_Owner"
                 label="Mare Owner Name"
-                value={form.Mare_Owner}
+                value={formState.Mare_Owner}
                 onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Mare_Phone"
                 label="Mare Owner Phone"
-                value={form.Mare_Phone}
+                value={formState.Mare_Phone}
                 onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Mare_Email"
                 label="Mare Owner Email"
-                value={form.Mare_Email}
+                value={formState.Mare_Email}
                 onChange={handleFormChange}
               />
             </div>
@@ -175,33 +175,33 @@ function App() {
                 required
                 id="Mare_Name"
                 label="Name"
-                value={form.Mare_Name}
+                value={formState.Mare_Name}
                 onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Birth_Year"
                 label="Birth Year"
-                value={form.Birth_Year}
+                value={formState.Birth_Year}
                 onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Breed"
                 label="Breed"
-                value={form.Breed}
+                value={formState.Breed}
                 onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Registration"
                 label="Registration #"
-                value={form.Registration}
+                value={formState.Registration}
                 onChange={handleFormChange}
               />
               <Select
                 id="Status"
-                value={form.Status}
+                value={formState.Status}
                 label="Status"
                 onChange={handleFormChange}
               >
@@ -219,14 +219,14 @@ function App() {
                 required
                 id="Stallion"
                 label="Stallion"
-                value={form.Stallion}
+                value={formState.Stallion}
                 onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Stallion_Owner"
                 label="Stallion Owner"
-                value={form.Stallion_Owner}
+                value={formState.Stallion_Owner}
                 onChange={handleFormChange}
               />
             </div>
@@ -238,49 +238,49 @@ function App() {
                 required
                 id="Recipient"
                 label="Recipient"
-                value={form.Recipient}
+                value={formState.Recipient}
                 onChange={handleAddressChange}
               />
               <TextField
                 required
                 id="Attn"
                 label="Attention"
-                value={form.Attn}
+                value={formState.Attn}
                 onChange={handleAddressChange}
               />
               <TextField
                 required
                 id="Recipient_Address"
                 label="Recipient Address"
-                value={form.Recipient_Address}
+                value={formState.Recipient_Address}
                 onChange={handleAddressChange}
               />
               <TextField
                 required
                 id="Street_Address"
                 label="Street Address"
-                value={form.Street_Address}
+                value={formState.Street_Address}
                 onChange={handleAddressChange}
               />
               <TextField
                 required
                 id="City"
                 label="City"
-                value={form.City}
+                value={formState.City}
                 onChange={handleAddressChange}
               />
               <TextField
                 required
                 id="State"
                 label="State"
-                value={form.State}
+                value={formState.State}
                 onChange={handleAddressChange}
               />
               <TextField
                 required
                 id="Zip_Code"
                 label="Zip Code"
-                value={form.Zip_Code}
+                value={formState.Zip_Code}
                 onChange={handleAddressChange}
               />
             </div>
@@ -290,7 +290,7 @@ function App() {
             <div className='info'>
               <Select
                 id="Status"
-                value={form.Status}
+                value={formState.Status}
                 label="Status"
                 onChange={handleFormChange}
               >
@@ -301,49 +301,49 @@ function App() {
                 required
                 id="Card_Name"
                 label="Recipient"
-                value={form.Card_Name}
+                value={formState.Card_Name}
                 onChange={handleFormChange}  
               />
               <TextField
                 required
                 id="Card_Number"
                 label="Attention"
-                value={form.Card_Number}
+                value={formState.Card_Number}
                 onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Security_Code"
                 label="Recipient Address"
-                value={form.Security_Code}
+                value={formState.Security_Code}
                 onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Expiration_Date"
                 label="Street Address"
-                value={form.Expiration_Date}
+                value={formState.Expiration_Date}
                 onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Billing_Address_1"
                 label="Billing Address 1"
-                value={form.Billing_Address_1}
+                value={formState.Billing_Address_1}
                 onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Billing_Address_2"
                 label="Billing Address 2"
-                value={form.Billing_Address_2}
+                value={formState.Billing_Address_2}
                 onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Billing_Address_3"
                 label="Billing Address 3"
-                value={form.Billing_Address_3}
+                value={formState.Billing_Address_3}
                 onChange={handleFormChange}
               />
             </div>
