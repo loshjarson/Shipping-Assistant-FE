@@ -91,12 +91,13 @@ function App() {
           field.setText(formState[input])
         })
 
-        //handles setting address text fields to address input values
+        //grab address fields in pdf
         const recipient = form.getTextField('Recipient');
         const address1 = form.getTextField('Recipient_Address_1');
         const address2 = form.getTextField('Recipient_Address_2');
         const address3 = form.getTextField('Recipient_Address_3');
-
+        
+        //formats address inputs and adds to form
         if(addressState.Attn.length() > 0){
           recipient.setText(addressState.Recipient + " Attn: " + addressState.Attn)
           address1.setText(addressState.Street_Address)
@@ -106,7 +107,7 @@ function App() {
      }
      if(toCreate.PTouch_Label){
       if(addressState.Attn){
-
+        
       }
      }
      //if ptouch chosen, check if there is attn. and fill pdf
