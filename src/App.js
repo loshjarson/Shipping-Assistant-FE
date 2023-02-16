@@ -48,7 +48,7 @@ const formsToCreate = {
 
 function App() {
   const [formState, setFormState] = useState(initialFormState);
-  const [address, setAddress] = useState(addressInitialState)
+  const [addressState, setAddress] = useState(addressInitialState)
   const [toCreate, setToCreate] = useState(formsToCreate);
 
   //handles changes made to normal form inputs
@@ -60,7 +60,7 @@ function App() {
 
   //handles changes made to address form inputs
   const handleAddressChange = (event) => {
-    let updatedAddress = address;
+    let updatedAddress = addressState;
     updatedAddress[event.target.id] = event.target.value;
     setAddress(updatedAddress);
   }
@@ -97,12 +97,17 @@ function App() {
         const address2 = form.getTextField('Recipient_Address_2');
         const address3 = form.getTextField('Recipient_Address_3');
 
-        if(address.Attn.length() > 0){
-          recipient.setText(address.Recipient + " Attn: " + address.Attn)
-          address1.setText(address.Street_Address)
-          address2.setText(address.City + ", " + address.State + " " + address.Zip_Code)
+        if(addressState.Attn.length() > 0){
+          recipient.setText(addressState.Recipient + " Attn: " + addressState.Attn)
+          address1.setText(addressState.Street_Address)
+          address2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code)
         }
         
+     }
+     if(toCreate.PTouch_Label){
+      if(addressState.Attn){
+
+      }
      }
      //if ptouch chosen, check if there is attn. and fill pdf
      //if shipping label chosen, update excel sheet
