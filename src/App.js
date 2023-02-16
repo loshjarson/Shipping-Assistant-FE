@@ -305,28 +305,28 @@ function App() {
               <TextField
                 required
                 id="Card_Name"
-                label="Recipient"
+                label="Card Name"
                 value={formState.Card_Name}
                 onChange={handleFormChange}  
               />
               <TextField
                 required
                 id="Card_Number"
-                label="Attention"
+                label="Card Number"
                 value={formState.Card_Number}
                 onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Security_Code"
-                label="Recipient Address"
+                label="Security Code"
                 value={formState.Security_Code}
                 onChange={handleFormChange}
               />
               <TextField
                 required
                 id="Expiration_Date"
-                label="Street Address"
+                label="Expiration Date"
                 value={formState.Expiration_Date}
                 onChange={handleFormChange}
               />
