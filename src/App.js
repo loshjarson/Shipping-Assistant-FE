@@ -16,7 +16,7 @@ const initialFormState = {
   Birth_Year: "",
   Breed: "",
   Registration: "",
-  Status: "",
+  Current_Status: "",
   Stallion:"",
   Stallion_Owner:"",
   Shipping_Date: "",
@@ -99,16 +99,19 @@ function App() {
         const recipient = form.getTextField('Recipient');
         const address1 = form.getTextField('Recipient_Address_1');
         const address2 = form.getTextField('Recipient_Address_2');
-        const address3 = form.getTextField('Recipient_Address_3');
         
         //formats address inputs and adds to form
-        if(addressState.Attn.length() > 0){
+        if(addressState.Attn){
           recipient.setText(addressState.Recipient + " Attn: " + addressState.Attn)
+          address1.setText(addressState.Street_Address)
+          address2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code)
+        } else {
+          recipient.setText(addressState.Recipient)
           address1.setText(addressState.Street_Address)
           address2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code)
         }
 
-        const requestPDFBytes = await pdfDoc.save()
+        requestPDFBytes = await pdfDoc.save()
      } 
      //if ptouch chosen, check if there is attn. and fill pdf
      if(toCreate.PTouch_Label){
@@ -132,6 +135,29 @@ function App() {
         //fill all fields
         companyName.setText(addressState.Recipient);
         recipientName.setText(addressState.Attn);
+        addressLine1.setText(addressState.Street_Address);
+        addressLine2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
+        phoneNumber.setText(addressState.Recipient_Phone);
+
+        pTouchPDFBytes = await pdfDoc.save()
+      } else {
+        const arrayBuffer = await fetch(CompPdf).then(res => res.arrayBuffer())
+        const pdfDoc = await PDFDocument.load(arrayBuffer);
+        const form = pdfDoc.getForm()
+        const fields = form.getFields()
+        fields.forEach(field => {
+          const name = field.getName()
+          console.log('Field name:', name)
+        })
+        
+        //select all fields
+        const recipientName = form.getTextField("Recipient_Name");
+        const addressLine1 = form.getTextField("Address_Line_1");
+        const addressLine2 = form.getTextField("Address_Line_2");
+        const phoneNumber = form.getTextField("Phone_Number");
+
+        //fill all fields
+        recipientName.setText(addressState.Recipient);
         addressLine1.setText(addressState.Street_Address);
         addressLine2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
         phoneNumber.setText(addressState.Recipient_Phone);
@@ -234,7 +260,7 @@ function App() {
               />
               <Select
                 id="Current_Status"
-                value={formState.Status}
+                value={formState.Current_Status}
                 label="Current Status"
                 onInput={handleFormChange}
               >
