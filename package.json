@@ -20,7 +20,8 @@
     "react-scripts": "^5.0.1",
     "styled-components": "^5.3.6",
     "wait-on": "^7.0.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.2/xlsx-0.19.2.tgz"
   },
   "main": "public/main.js",
   "homepage": "./",
@@ -32,7 +33,6 @@
     "electron:start": "wait-on tcp:127.0.0.1:3000 && electron .",
     "electron:serve": "concurrently \"cross-env npm start\" \"npm run electron:start\"",
     "electron:build": ""
-    
   },
   "eslintConfig": {
     "extends": [

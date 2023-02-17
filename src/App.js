@@ -5,6 +5,7 @@ import { PDFDocument } from 'pdf-lib';
 import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf';
 import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
 import CompPdf from './Assets/Company_Or_Recipient_Label.pdf';
+var XLSX = require("xlsx");
 
 
 //initial for form inputs minus shipping address
@@ -46,6 +47,7 @@ const formsToCreate = {
   Shipment_Request: true,
   PTouch_Label: true,
   Shipping_Label: true,
+  Excel:true,
 }
 
 
@@ -83,6 +85,9 @@ function App() {
   //handles submission events. pdf form filling, and shipment label request
   const onSubmit = async (event) => {
     console.log("submitting")
+     if(toCreate.Excel){
+
+     }
      //if request chosen, fill request pdf
      if(toCreate.Shipment_Request) {
         //selects request file and converts to array buffer for pdf-lib
@@ -164,9 +169,11 @@ function App() {
       
       }
      }
+     if(toCreate.Shipping_Label){
+
+      //if shipping label chosen, send request and store response
+     }
      
-     //if shipping label chosen, update excel sheet
-     //if shipping label chosen, send request and store response
   }
 
   return (
@@ -175,6 +182,14 @@ function App() {
         <h1>Shipment Assistant</h1>
       </header>
       <div>
+        <FormControlLabel
+          label="Excel"
+          control={<Checkbox
+            id='Excel'
+            checked={toCreate.Excel}
+            onChange={handleCreateChange}
+            />}
+        />
         <FormControlLabel
           label="Shipment Request"
           control={<Checkbox
