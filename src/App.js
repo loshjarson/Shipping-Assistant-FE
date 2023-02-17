@@ -5,8 +5,8 @@ import { PDFDocument } from 'pdf-lib';
 import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf';
 import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
 import CompPdf from './Assets/Company_Or_Recipient_Label.pdf';
-var XLSX = require("xlsx");
-
+const XLSX = require("xlsx");
+const electron = require('@electron/remote');
 
 //initial for form inputs minus shipping address
 const initialFormState = {
@@ -50,6 +50,20 @@ const formsToCreate = {
   Excel:true,
 }
 
+/* this function will show the open dialog and try to parse the workbook */
+async function importFile() {
+  /* show Save As dialog */
+  const result = await electron.dialog.showOpenDialog({
+    title: 'Select a file',
+    filters: [{
+      name: "Spreadsheets",
+      extensions: ["xlsx", "xls", "xlsb", /* ... other formats ... */]
+    }]
+  });
+  /* result.filePaths is an array of selected files */
+  if(result.filePaths.length == 0) throw new Error("No file was selected!");
+  return XLSX.readFile(result.filePaths[0]);
+}
 
 function App() {
   const [formState, setFormState] = useState(initialFormState);
@@ -86,7 +100,7 @@ function App() {
   const onSubmit = async (event) => {
     console.log("submitting")
      if(toCreate.Excel){
-
+      const excel = importFile()
      }
      //if request chosen, fill request pdf
      if(toCreate.Shipment_Request) {
