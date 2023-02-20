@@ -39,6 +39,7 @@ ipcMain.handle('edit-excel', async (event, arg) => {
     const date = arg[0].Shipping_Date.format("MM/DD/YYYY")
     const monthNum = arg[0].Shipping_Date.get("month")
     const month = months[monthNum]
+    const year = arg[0].Shipping_Date.format("YY")
 
     //grab excel file
     const workbook = XLSX.readFile("C:/Users/Josh/Downloads/2023 Shipments.xlsx");
@@ -60,6 +61,8 @@ ipcMain.handle('edit-excel', async (event, arg) => {
             const newRow = newRange.e.r
             const prevShip = newWorksheet[XLSX.utils.encode_cell({ r: (newRow - 1), c: 0})].v 
             worksheet[XLSX.utils.encode_cell({ r: row, c: 0})].v =  prevShip + 1
+        } else {
+            worksheet[XLSX.utils.encode_cell({r:1, c:0})].v = year + "001"
         }
         
     }
