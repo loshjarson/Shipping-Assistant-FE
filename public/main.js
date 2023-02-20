@@ -40,6 +40,7 @@ ipcMain.handle('edit-excel', async (event, arg) => {
     const monthNum = arg[0].Shipping_Date.get("month")
     const month = months[monthNum]
     const year = arg[0].Shipping_Date.format("YY")
+    const dueDate = arg[0].Shipping_Date.add(7, "day")
 
     //grab excel file
     const workbook = XLSX.readFile("C:/Users/Josh/Downloads/2023 Shipments.xlsx");
@@ -64,8 +65,18 @@ ipcMain.handle('edit-excel', async (event, arg) => {
         } else {
             worksheet[XLSX.utils.encode_cell({r:1, c:0})].v = year + "001"
         }
-        
     }
+    worksheet[XLSX.utils.encode_cell({ r: row, c: 1})].v = arg[0].Stallion
+    worksheet[XLSX.utils.encode_cell({ r: row, c: 2})].v = arg[0].Stallion_Owner
+    worksheet[XLSX.utils.encode_cell({ r: row, c: 3})].v = arg[0].Mare_Name
+    worksheet[XLSX.utils.encode_cell({ r: row, c: 4})].v = arg[0].Mare_Owner
+    worksheet[XLSX.utils.encode_cell({ r: row, c: 5})].v = date
+    worksheet[XLSX.utils.encode_cell({ r: row, c: 6})].v = arg[0].Doses
+    worksheet[XLSX.utils.encode_cell({ r: row, c: 7})].v = "1"
+    worksheet[XLSX.utils.encode_cell({ r: row, c: 8})].v = "1"
+    worksheet[XLSX.utils.encode_cell({ r: row, c: 10})].v = dueDate.format("MM/DD/YYYY")
+    worksheet[XLSX.utils.encode_cell({ r: row, c: 13})].v = arg[1].Recipient
+    worksheet[XLSX.utils.encode_cell({ r: row, c: 14})].v = "N"
     
     console.log(range)
 })
