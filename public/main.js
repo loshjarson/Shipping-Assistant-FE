@@ -34,8 +34,8 @@ app.on('activate', function () {
 
 ipcMain.handle('edit-excel', async (event, arg) => {
     //store month of shipment to grab correct sheet 
-    const month = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-    
+    const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const date = arg[0].Shipping_Date.format("MM/DD/YYYY")
 
     const workbook = XLSX.readFile("C:/Users/Josh/Downloads/2023 Shipments.xlsx");
 
