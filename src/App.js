@@ -1,12 +1,14 @@
 import './App.css';
 import { useState } from 'react';
 import { TextField, Select, MenuItem, Checkbox, FormControlLabel, Button} from '@mui/material';
+import { DesktopDatePicker } from '@mui/x-date-pickers/DesktopDatePicker';
 import { PDFDocument } from 'pdf-lib';
 import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf';
 import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
 import CompPdf from './Assets/Company_Or_Recipient_Label.pdf';
-const XLSX = require("xlsx");
-const electron = require('@electron/remote');
+
+//ipc renderer allows to send requests to electron main file
+const ipcRenderer = window.require("electron").ipcRenderer;
 
 //initial for form inputs minus shipping address
 const initialFormState = {
@@ -43,32 +45,21 @@ const addressInitialState = {
 }
 
 //initial state for forms the user wants to create
-const formsToCreate = {
+const ToCreateInitialState = {
   Shipment_Request: true,
   PTouch_Label: true,
   Shipping_Label: true,
-  Excel:true,
+  Excel:true, 
 }
 
-/* this function will show the open dialog and try to parse the workbook */
-async function importFile() {
-  /* show Save As dialog */
-  const result = await electron.dialog.showOpenDialog({
-    title: 'Select a file',
-    filters: [{
-      name: "Spreadsheets",
-      extensions: ["xlsx", "xls", "xlsb", /* ... other formats ... */]
-    }]
-  });
-  /* result.filePaths is an array of selected files */
-  if(result.filePaths.length == 0) throw new Error("No file was selected!");
-  return XLSX.readFile(result.filePaths[0]);
-}
 
 function App() {
   const [formState, setFormState] = useState(initialFormState);
   const [addressState, setAddress] = useState(addressInitialState);
-  const [toCreate, setToCreate] = useState(formsToCreate);
+  const [toCreateState, setToCreateState] = useState(ToCreateInitialState);
+
+  //variable to hold shipment number
+  let shipmentNumber = null;
 
   //form variables that will be served
   let requestPDFBytes = null;
@@ -91,26 +82,34 @@ function App() {
 
   //handles changes made to choices of files to create
   const handleCreateChange = (event) => {
-    let update = {...toCreate};
-    update[event.target.id] = !toCreate[event.target.id];
-    setToCreate({...update});
+    let update = {...toCreateState};
+    update[event.target.id] = !toCreateState[event.target.id];
+    setToCreateState({...update});
+  }
+
+  // edit excel function
+  const editExcel = () => {
+    ipcRenderer.invoke('edit-excel', [formState,addressState,toCreateState])
+      .then((result) => {
+        console.log(result)
+      })
   }
 
   //handles submission events. pdf form filling, and shipment label request
   const onSubmit = async (event) => {
     console.log("submitting")
-     if(toCreate.Excel){
-      const excel = importFile()
+     if(toCreateState.Excel){
+      editExcel()
      }
      //if request chosen, fill request pdf
-     if(toCreate.Shipment_Request) {
+     if(toCreateState.Shipment_Request) {
         //selects request file and converts to array buffer for pdf-lib
         const arrayBuffer = await fetch(requestPDF).then(res => res.arrayBuffer())
         const pdfDoc = await PDFDocument.load(arrayBuffer);
-        const form = pdfDoc.getForm()
+        const form = pdfDoc.getForm();
         //sets text field to be value of form inputs
         Object.keys(formState).forEach(input => {
-          const field = form.getTextField(input)
+          const field = form.getTextField(input);
           field.setText(formState[input])
         })
 
@@ -121,28 +120,23 @@ function App() {
         
         //formats address inputs and adds to form
         if(addressState.Attn){
-          recipient.setText(addressState.Recipient + " Attn: " + addressState.Attn)
-          address1.setText(addressState.Street_Address)
-          address2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code)
+          recipient.setText(addressState.Recipient + " Attn: " + addressState.Attn);
+          address1.setText(addressState.Street_Address);
+          address2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
         } else {
-          recipient.setText(addressState.Recipient)
-          address1.setText(addressState.Street_Address)
-          address2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code)
+          recipient.setText(addressState.Recipient);
+          address1.setText(addressState.Street_Address);
+          address2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
         }
 
         requestPDFBytes = await pdfDoc.save()
      } 
      //if ptouch chosen, check if there is attn. and fill pdf
-     if(toCreate.PTouch_Label){
+     if(toCreateState.PTouch_Label){
       if(addressState.Attn){
-        const arrayBuffer = await fetch(CompAttnPdf).then(res => res.arrayBuffer())
+        const arrayBuffer = await fetch(CompAttnPdf).then(res => res.arrayBuffer());
         const pdfDoc = await PDFDocument.load(arrayBuffer);
-        const form = pdfDoc.getForm()
-        const fields = form.getFields()
-        fields.forEach(field => {
-          const name = field.getName()
-          console.log('Field name:', name)
-        })
+        const form = pdfDoc.getForm();
         
         //select all fields
         const companyName = form.getTextField("Company_Name");
@@ -159,6 +153,7 @@ function App() {
         phoneNumber.setText(addressState.Recipient_Phone);
 
         pTouchPDFBytes = await pdfDoc.save()
+
       } else {
         const arrayBuffer = await fetch(CompPdf).then(res => res.arrayBuffer())
         const pdfDoc = await PDFDocument.load(arrayBuffer);
@@ -183,7 +178,7 @@ function App() {
       
       }
      }
-     if(toCreate.Shipping_Label){
+     if(toCreateState.Shipping_Label){
 
       //if shipping label chosen, send request and store response
      }
@@ -200,7 +195,7 @@ function App() {
           label="Excel"
           control={<Checkbox
             id='Excel'
-            checked={toCreate.Excel}
+            checked={toCreateState.Excel}
             onChange={handleCreateChange}
             />}
         />
@@ -208,7 +203,7 @@ function App() {
           label="Shipment Request"
           control={<Checkbox
             id='Shipment_Request'
-            checked={toCreate.Shipment_Request}
+            checked={toCreateState.Shipment_Request}
             onChange={handleCreateChange}
             />}
         />
@@ -216,7 +211,7 @@ function App() {
           label="PTouch Label"
           control={<Checkbox
             id='PTouch_Label'
-            checked={toCreate.PTouch_Label}
+            checked={toCreateState.PTouch_Label}
             onChange={handleCreateChange}
             />}
         />
@@ -224,7 +219,7 @@ function App() {
           label="Shipping Label"
           control={<Checkbox
             id='Shipping_Label'
-            checked={toCreate.Shipping_Label}
+            checked={toCreateState.Shipping_Label}
             onChange={handleCreateChange}
             />}
         />
@@ -371,15 +366,22 @@ function App() {
                 value={formState.Zip_Code}
                 onInput={handleAddressChange}
               />
+              <DesktopDatePicker
+                label="Date desktop"
+                inputFormat="MM/DD/YYYY"
+                value={value}
+                onChange={handleChange}
+                renderInput={(params) => <TextField {...params} />}
+              />
             </div>
         </div>
         <div className='cc'>
           <h3>Payment Information</h3>
             <div className='info'>
               <Select
-                id="Status"
+                id="Card_Type"
                 value={formState.Status}
-                label="Status"
+                label="Card_Type"
                 onInput={handleFormChange}
               >
                 <MenuItem value={'Visa'}>Visa</MenuItem>
