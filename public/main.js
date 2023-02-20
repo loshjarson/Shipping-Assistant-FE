@@ -54,7 +54,15 @@ ipcMain.handle('edit-excel', async (event, arg) => {
         const prevShip = worksheet[XLSX.utils.encode_cell({ r: (row - 1), c: 0})].v 
         worksheet[XLSX.utils.encode_cell({ r: row, c: 0})].v = prevShip + 1
     } else {
-        worksheet[XLSX.utils.encode_cell({ r: row, c: 0})].v = year + "001"
+        if (monthNum > 0){
+            const newMonth = months[monthNum - 1]
+            const newWorksheet = workbook.Sheets[newMonth]
+            const newRange = XLSX.utils.decode_range(newWorksheet["!ref"])
+            const newRow = newRange.e.r
+            const prevShip = newWorksheet[XLSX.utils.encode_cell({ r: (row - 1), c: 0})].v 
+            worksheet[XLSX.utils.encode_cell({ r: row, c: 0})].v =  prevShip + 1
+        }
+        
     }
     
     console.log(range)
