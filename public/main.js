@@ -59,7 +59,7 @@ ipcMain.handle('edit-excel', async (event, arg) => {
             const newWorksheet = workbook.Sheets[newMonth]
             const newRange = XLSX.utils.decode_range(newWorksheet["!ref"])
             const newRow = newRange.e.r
-            const prevShip = newWorksheet[XLSX.utils.encode_cell({ r: (row - 1), c: 0})].v 
+            const prevShip = newWorksheet[XLSX.utils.encode_cell({ r: (newRow - 1), c: 0})].v 
             worksheet[XLSX.utils.encode_cell({ r: row, c: 0})].v =  prevShip + 1
         }
         
