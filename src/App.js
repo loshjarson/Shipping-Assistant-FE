@@ -25,6 +25,7 @@ const initialFormState = {
   Current_Status: "",
   Stallion:"",
   Stallion_Owner:"",
+  Doses:"",
   Shipping_Date: null,
   Card_Name: "",
   Card_Number: "",
@@ -324,6 +325,13 @@ function App() {
                 id="Stallion_Owner"
                 label="Stallion Owner"
                 value={formState.Stallion_Owner}
+                onInput={handleFormChange}
+              />
+              <TextField
+                required
+                id="Doses"
+                label="Doses"
+                value={formState.Doses}
                 onInput={handleFormChange}
               />
             </div>
