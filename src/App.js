@@ -1,7 +1,10 @@
 import './App.css';
 import { useState } from 'react';
 import { TextField, Select, MenuItem, Checkbox, FormControlLabel, Button} from '@mui/material';
-import { DesktopDatePicker } from '@mui/x-date-pickers/DesktopDatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { Dayjs } from 'dayjs';
 import { PDFDocument } from 'pdf-lib';
 import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf';
 import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
@@ -22,7 +25,7 @@ const initialFormState = {
   Current_Status: "",
   Stallion:"",
   Stallion_Owner:"",
-  Shipping_Date: "",
+  Shipping_Date: null,
   Card_Name: "",
   Card_Number: "",
   Security_Code: "",
@@ -68,9 +71,15 @@ function App() {
 
   //handles changes made to normal form inputs
   const handleFormChange = (event) => {
-    let updatedForm = {...formState};
-    updatedForm[event.target.id] = event.target.value;
-    setFormState({...updatedForm});
+    if(typeof event === "object") {
+      let updatedForm = {...formState};
+      updatedForm.Shipping_Date = event;
+      setFormState({...updatedForm})
+    } else {
+      let updatedForm = {...formState};
+      updatedForm[event.target.id] = event.target.value;
+      setFormState({...updatedForm});
+    }
   };
 
   //handles changes made to address form inputs
@@ -110,7 +119,12 @@ function App() {
         //sets text field to be value of form inputs
         Object.keys(formState).forEach(input => {
           const field = form.getTextField(input);
-          field.setText(formState[input])
+          if(input === "Shipping_Date") {
+            field.setText(formState[input].format('MM/DD/YYYY'))
+          } else {
+           field.setText(formState[input]) 
+          }
+          
         })
 
         //grab address fields in pdf
@@ -366,13 +380,14 @@ function App() {
                 value={formState.Zip_Code}
                 onInput={handleAddressChange}
               />
-              <DesktopDatePicker
-                label="Date desktop"
-                inputFormat="MM/DD/YYYY"
-                value={value}
-                onChange={handleChange}
-                renderInput={(params) => <TextField {...params} />}
-              />
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Shipping Date"
+                  value={formState.Shipping_Date}
+                  onChange={handleFormChange}
+                  renderInput={(params) => <TextField {...params} />}
+                />
+              </LocalizationProvider>
             </div>
         </div>
         <div className='cc'>
