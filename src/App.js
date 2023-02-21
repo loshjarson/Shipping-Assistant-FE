@@ -1,10 +1,9 @@
 import './App.css';
 import { useState } from 'react';
-import { TextField, Select, MenuItem, Checkbox, FormControlLabel, Button} from '@mui/material';
+import { TextField, Select, MenuItem, Checkbox, FormControlLabel, Button, Box, InputLabel, FormControl} from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { Dayjs } from 'dayjs';
 import { PDFDocument } from 'pdf-lib';
 import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf';
 import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
@@ -15,6 +14,7 @@ const ipcRenderer = window.require("electron").ipcRenderer;
 
 //initial for form inputs minus shipping address
 const initialFormState = {
+  Shipment_Number: null,
   Mare_Owner: "",
   Mare_Phone: "",
   Mare_Email: "",
@@ -27,6 +27,7 @@ const initialFormState = {
   Stallion_Owner:"",
   Doses:"",
   Shipping_Date: null,
+  Card_Type: "",
   Card_Name: "",
   Card_Number: "",
   Security_Code: "",
@@ -72,6 +73,7 @@ function App() {
 
   //handles changes made to normal form inputs
   const handleFormChange = (event) => {
+    console.log(event)
     if(typeof event === "object") {
       let updatedForm = {...formState};
       updatedForm.Shipping_Date = event;
@@ -108,9 +110,6 @@ function App() {
   //handles submission events. pdf form filling, and shipment label request
   const onSubmit = async (event) => {
     console.log("submitting")
-     if(toCreateState.Excel){
-      editExcel()
-     }
      //if request chosen, fill request pdf
      if(toCreateState.Shipment_Request) {
         //selects request file and converts to array buffer for pdf-lib
@@ -205,264 +204,273 @@ function App() {
       <header className="App-header">
         <h1>Shipment Assistant</h1>
       </header>
-      <div>
-        <FormControlLabel
-          label="Excel"
-          control={<Checkbox
-            id='Excel'
-            checked={toCreateState.Excel}
-            onChange={handleCreateChange}
-            />}
-        />
-        <FormControlLabel
-          label="Shipment Request"
-          control={<Checkbox
-            id='Shipment_Request'
-            checked={toCreateState.Shipment_Request}
-            onChange={handleCreateChange}
-            />}
-        />
-        <FormControlLabel
-          label="PTouch Label"
-          control={<Checkbox
-            id='PTouch_Label'
-            checked={toCreateState.PTouch_Label}
-            onChange={handleCreateChange}
-            />}
-        />
-        <FormControlLabel
-          label="Shipping Label"
-          control={<Checkbox
-            id='Shipping_Label'
-            checked={toCreateState.Shipping_Label}
-            onChange={handleCreateChange}
-            />}
-        />
-      </div>
-      <div id="form">
-        <div className='mare-owner'>
-          <h3>Mare Owner Information</h3>
-            <div className='info'>
-              <TextField
-                required
-                id="Mare_Owner"
-                label="Mare Owner Name"
-                value={formState.Mare_Owner}
-                onInput={handleFormChange}
-              />
-              <TextField
-                required
-                id="Mare_Phone"
-                label="Mare Owner Phone"
-                value={formState.Mare_Phone}
-                onInput={handleFormChange}
-              />
-              <TextField
-                required
-                id="Mare_Email"
-                label="Mare Owner Email"
-                value={formState.Mare_Email}
-                onInput={handleFormChange}
-              />
-            </div>
+      <Box
+        component="form"
+        sx={{
+          '& .MuiTextField-root': { m: 1, width: '25ch' },
+        }}
+        noValidate
+        autoComplete="off"
+      >
+        <div>
+          <FormControlLabel
+            label="Shipment Request"
+            control={<Checkbox
+              id='Shipment_Request'
+              checked={toCreateState.Shipment_Request}
+              onChange={handleCreateChange}
+              />}
+          />
+          <FormControlLabel
+            label="PTouch Label"
+            control={<Checkbox
+              id='PTouch_Label'
+              checked={toCreateState.PTouch_Label}
+              onChange={handleCreateChange}
+              />}
+          />
+          <FormControlLabel
+            label="Shipping Label"
+            control={<Checkbox
+              id='Shipping_Label'
+              checked={toCreateState.Shipping_Label}
+              onChange={handleCreateChange}
+              />}
+          />
         </div>
-        <div className='mare'>
-          <h3>Mare Information</h3>
-            <div className='info'>
-              <TextField
-                required
-                id="Mare_Name"
-                label="Name"
-                value={formState.Mare_Name}
-                onInput={handleFormChange}
-              />
-              <TextField
-                required
-                id="Birth_Year"
-                label="Birth Year"
-                value={formState.Birth_Year}
-                onInput={handleFormChange}
-              />
-              <TextField
-                required
-                id="Breed"
-                label="Breed"
-                value={formState.Breed}
-                onInput={handleFormChange}
-              />
-              <TextField
-                required
-                id="Registration"
-                label="Registration #"
-                value={formState.Registration}
-                onInput={handleFormChange}
-              />
-              <Select
-                id="Current_Status"
-                value={formState.Current_Status}
-                label="Current Status"
-                onInput={handleFormChange}
-              >
-                <MenuItem value={'Maiden'}>Maiden</MenuItem>
-                <MenuItem value={'Foaled'}>Foaled</MenuItem>
-                <MenuItem value={'Barren'}>Barren</MenuItem>
-                <MenuItem value={'Not Bred'}>Not Bred</MenuItem>
-              </Select>
-            </div>
-        </div>
-        <div className='stallion'>
-          <h3>Stallion Information</h3>
-            <div className='info'>
-              <TextField
-                required
-                id="Stallion"
-                label="Stallion"
-                value={formState.Stallion}
-                onInput={handleFormChange}
-              />
-              <TextField
-                required
-                id="Stallion_Owner"
-                label="Stallion Owner"
-                value={formState.Stallion_Owner}
-                onInput={handleFormChange}
-              />
-              <TextField
-                required
-                id="Doses"
-                label="Doses"
-                value={formState.Doses}
-                onInput={handleFormChange}
-              />
-            </div>
-        </div>
-        <div className='recipient'>
-          <h3>Recipient Information</h3>
-            <div className='info'>
-              <TextField
-                required
-                id="Recipient"
-                label="Recipient/Company"
-                value={formState.Recipient}
-                onInput={handleAddressChange}
-              />
-              <TextField
-                required
-                id="Attn"
-                label="Attention"
-                value={formState.Attn}
-                onInput={handleAddressChange}
-              />
-              <TextField
-                required
-                id="Recipient_Address"
-                label="Recipient Address"
-                value={formState.Recipient_Address}
-                onInput={handleAddressChange}
-              />
-              <TextField
-                required
-                id="Street_Address"
-                label="Street Address"
-                value={formState.Street_Address}
-                onInput={handleAddressChange}
-              />
-              <TextField
-                required
-                id="City"
-                label="City"
-                value={formState.City}
-                onInput={handleAddressChange}
-              />
-              <TextField
-                required
-                id="State"
-                label="State"
-                value={formState.State}
-                onInput={handleAddressChange}
-              />
-              <TextField
-                required
-                id="Zip_Code"
-                label="Zip Code"
-                value={formState.Zip_Code}
-                onInput={handleAddressChange}
-              />
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DatePicker
-                  label="Shipping Date"
-                  value={formState.Shipping_Date}
-                  onChange={handleFormChange}
-                  renderInput={(params) => <TextField {...params} />}
+        <div id="form">
+          <div className='mare-owner'>
+            <h3>Mare Owner Information</h3>
+              <div className='info'>
+                <TextField
+                  required
+                  id="Mare_Owner"
+                  label="Mare Owner Name"
+                  value={formState.Mare_Owner}
+                  onInput={handleFormChange}
                 />
-              </LocalizationProvider>
-            </div>
+                <TextField
+                  required
+                  id="Mare_Phone"
+                  label="Mare Owner Phone"
+                  value={formState.Mare_Phone}
+                  onInput={handleFormChange}
+                />
+                <TextField
+                  required
+                  id="Mare_Email"
+                  label="Mare Owner Email"
+                  value={formState.Mare_Email}
+                  onInput={handleFormChange}
+                />
+              </div>
+          </div>
+          <div className='mare'>
+            <h3>Mare Information</h3>
+              <div className='info'>
+                <TextField
+                  required
+                  id="Mare_Name"
+                  label="Name"
+                  value={formState.Mare_Name}
+                  onInput={handleFormChange}
+                />
+                <TextField
+                  required
+                  id="Birth_Year"
+                  label="Birth Year"
+                  value={formState.Birth_Year}
+                  onInput={handleFormChange}
+                />
+                <TextField
+                  required
+                  id="Breed"
+                  label="Breed"
+                  value={formState.Breed}
+                  onInput={handleFormChange}
+                />
+                <TextField
+                  required
+                  id="Registration"
+                  label="Registration #"
+                  value={formState.Registration}
+                  onInput={handleFormChange}
+                />
+                <FormControl sx={{ m: 1, minWidth: 120 }}>
+                <InputLabel id="Current_Status_label">Current Status</InputLabel>
+                <Select
+                  id="Current_Status"
+                  value={formState.Current_Status}
+                  labelId="Current_Status_label"
+                  label="Current Status"
+                  onInput={handleFormChange}
+                >
+                  <MenuItem value={'Maiden'}>Maiden</MenuItem>
+                  <MenuItem value={'Foaled'}>Foaled</MenuItem>
+                  <MenuItem value={'Barren'}>Barren</MenuItem>
+                  <MenuItem value={'Not Bred'}>Not Bred</MenuItem>
+                </Select>
+                </FormControl>
+              </div>
+          </div>
+          <div className='stallion'>
+            <h3>Stallion Information</h3>
+              <div className='info'>
+                <TextField
+                  required
+                  id="Stallion"
+                  label="Stallion"
+                  value={formState.Stallion}
+                  onInput={handleFormChange}
+                />
+                <TextField
+                  required
+                  id="Stallion_Owner"
+                  label="Stallion Owner"
+                  value={formState.Stallion_Owner}
+                  onInput={handleFormChange}
+                />
+                <TextField
+                  required
+                  id="Doses"
+                  label="Doses"
+                  value={formState.Doses}
+                  onInput={handleFormChange}
+                />
+              </div>
+          </div>
+          <div className='recipient'>
+            <h3>Recipient Information</h3>
+              <div className='info'>
+                <TextField
+                  required
+                  id="Recipient"
+                  label="Recipient/Company"
+                  value={formState.Recipient}
+                  onInput={handleAddressChange}
+                />
+                <TextField
+                  required
+                  id="Attn"
+                  label="Attention"
+                  value={formState.Attn}
+                  onInput={handleAddressChange}
+                />
+                <TextField
+                  required
+                  id="Recipient_Address"
+                  label="Recipient Address"
+                  value={formState.Recipient_Address}
+                  onInput={handleAddressChange}
+                />
+                <TextField
+                  required
+                  id="Street_Address"
+                  label="Street Address"
+                  value={formState.Street_Address}
+                  onInput={handleAddressChange}
+                />
+                <TextField
+                  required
+                  id="City"
+                  label="City"
+                  value={formState.City}
+                  onInput={handleAddressChange}
+                />
+                <TextField
+                  required
+                  id="State"
+                  label="State"
+                  value={formState.State}
+                  onInput={handleAddressChange}
+                />
+                <TextField
+                  required
+                  id="Zip_Code"
+                  label="Zip Code"
+                  value={formState.Zip_Code}
+                  onInput={handleAddressChange}
+                />
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    label="Shipping Date"
+                    value={formState.Shipping_Date}
+                    onChange={handleFormChange}
+                    renderInput={(params) => <TextField {...params} />}
+                  />
+                </LocalizationProvider>
+              </div>
+          </div>
+          <div className='cc'>
+            <h3>Payment Information</h3>
+              <div className='info'>
+              <FormControl sx={{ m: 1, minWidth: 120 }}>
+                <InputLabel id="Card_Type_label">Card Type</InputLabel>
+                <Select
+                  id="Card_Type"
+                  value={formState.Current_Status}
+                  labelId="Card_Type_label"
+                  label="Card Type"
+                  onInput={handleFormChange}
+                >
+                  <MenuItem value={'Visa'}>Visa</MenuItem>
+                  <MenuItem value={'MC'}>MasterCard</MenuItem>
+                </Select>
+                </FormControl>
+                <TextField
+                  required
+                  id="Card_Name"
+                  label="Card Name"
+                  value={formState.Card_Name}
+                  onInput={handleFormChange}  
+                />
+                <TextField
+                  required
+                  id="Card_Number"
+                  label="Card Number"
+                  value={formState.Card_Number}
+                  onInput={handleFormChange}
+                />
+                <TextField
+                  required
+                  id="Security_Code"
+                  label="Security Code"
+                  value={formState.Security_Code}
+                  onInput={handleFormChange}
+                />
+                <TextField
+                  required
+                  id="Expiration_Date"
+                  label="Expiration Date"
+                  value={formState.Expiration_Date}
+                  onInput={handleFormChange}
+                />
+                <TextField
+                  required
+                  id="Billing_Address_1"
+                  label="Billing Address 1"
+                  value={formState.Billing_Address_1}
+                  onInput={handleFormChange}
+                />
+                <TextField
+                  required
+                  id="Billing_Address_2"
+                  label="Billing Address 2"
+                  value={formState.Billing_Address_2}
+                  onInput={handleFormChange}
+                />
+                <TextField
+                  required
+                  id="Billing_Address_3"
+                  label="Billing Address 3"
+                  value={formState.Billing_Address_3}
+                  onInput={handleFormChange}
+                />
+              </div>
+          </div>
+          <Button variant="contained" onClick={onSubmit}>Submit</Button>
         </div>
-        <div className='cc'>
-          <h3>Payment Information</h3>
-            <div className='info'>
-              <Select
-                id="Card_Type"
-                value={formState.Status}
-                label="Card_Type"
-                onInput={handleFormChange}
-              >
-                <MenuItem value={'Visa'}>Visa</MenuItem>
-                <MenuItem value={'MC'}>MasterCard</MenuItem>
-              </Select>
-              <TextField
-                required
-                id="Card_Name"
-                label="Card Name"
-                value={formState.Card_Name}
-                onInput={handleFormChange}  
-              />
-              <TextField
-                required
-                id="Card_Number"
-                label="Card Number"
-                value={formState.Card_Number}
-                onInput={handleFormChange}
-              />
-              <TextField
-                required
-                id="Security_Code"
-                label="Security Code"
-                value={formState.Security_Code}
-                onInput={handleFormChange}
-              />
-              <TextField
-                required
-                id="Expiration_Date"
-                label="Expiration Date"
-                value={formState.Expiration_Date}
-                onInput={handleFormChange}
-              />
-              <TextField
-                required
-                id="Billing_Address_1"
-                label="Billing Address 1"
-                value={formState.Billing_Address_1}
-                onInput={handleFormChange}
-              />
-              <TextField
-                required
-                id="Billing_Address_2"
-                label="Billing Address 2"
-                value={formState.Billing_Address_2}
-                onInput={handleFormChange}
-              />
-              <TextField
-                required
-                id="Billing_Address_3"
-                label="Billing Address 3"
-                value={formState.Billing_Address_3}
-                onInput={handleFormChange}
-              />
-            </div>
-        </div>
-        <Button variant="contained" onClick={onSubmit}>Submit</Button>
-      </div>
+      </Box>
     </div>
   );
 }
