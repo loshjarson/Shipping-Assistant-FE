@@ -14,7 +14,7 @@ const ipcRenderer = window.require("electron").ipcRenderer;
 
 //initial for form inputs minus shipping address
 const initialFormState = {
-  Shipment_Number: null,
+  Shipment_Number: "",
   Mare_Owner: "",
   Mare_Phone: "",
   Mare_Email: "",
@@ -35,6 +35,7 @@ const initialFormState = {
   Billing_Address_1: "",
   Billing_Address_2: "",
   Billing_Address_3: "",
+  Service_Type: "",
 }
 
 //initial state for shipping address
@@ -74,7 +75,7 @@ function App() {
   //handles changes made to normal form inputs
   const handleFormChange = (event) => {
     console.log(event)
-    if(typeof event === "object") {
+    if(event.$L) {
       let updatedForm = {...formState};
       updatedForm.Shipping_Date = event;
       setFormState({...updatedForm})
@@ -111,12 +112,20 @@ function App() {
         const form = pdfDoc.getForm();
         //sets text field to be value of form inputs
         Object.keys(formState).forEach(input => {
+          if (input === "Service_Type"){
+            const checkbox = form.getCheckBox(formState[input])
+            checkbox.check()
+          } else if (input === "Card_Type") {
+            const checkbox = form.getCheckBox(formState[input])
+            checkbox.check()
+          } else{
           const field = form.getTextField(input);
           if(input === "Shipping_Date") {
             field.setText(formState[input].format('MM/DD/YYYY'))
           } else {
            field.setText(formState[input]) 
           }
+        }
           
         })
 
@@ -296,7 +305,9 @@ function App() {
                   value={formState.Current_Status}
                   labelId="Current_Status_label"
                   label="Current Status"
-                  onInput={handleFormChange}
+                  onChange={(e) => {
+                    handleFormChange({target:{value:e.target.value,id:"Current_Status"}})
+                  }}
                 >
                   <MenuItem value={'Maiden'}>Maiden</MenuItem>
                   <MenuItem value={'Foaled'}>Foaled</MenuItem>
@@ -392,6 +403,21 @@ function App() {
                     renderInput={(params) => <TextField {...params} />}
                   />
                 </LocalizationProvider>
+                <FormControl sx={{ m: 1, minWidth: 120 }}>
+                <InputLabel id="Service_Type_label">Service Type</InputLabel>
+                <Select
+                  id="Service_Type"
+                  value={formState.Current_Status}
+                  labelId="Service_Type_label"
+                  label="Service Type"
+                  onChange={(e) => {
+                    handleFormChange({target:{value:e.target.value,id:"Service_Type"}})
+                  }}
+                >
+                  <MenuItem value={'FEDEX_2_DAY'}>2 Day</MenuItem>
+                  <MenuItem value={'PRIORITY_OVERNIGHT'}>Priority Overnight</MenuItem>
+                </Select>
+                </FormControl>
               </div>
           </div>
           <div className='cc'>
@@ -404,12 +430,15 @@ function App() {
                   value={formState.Current_Status}
                   labelId="Card_Type_label"
                   label="Card Type"
-                  onInput={handleFormChange}
+                  onChange={(e) => {
+                    handleFormChange({target:{value:e.target.value,id:"Card_Type"}})
+                  }}
                 >
                   <MenuItem value={'Visa'}>Visa</MenuItem>
                   <MenuItem value={'MC'}>MasterCard</MenuItem>
                 </Select>
                 </FormControl>
+                <br/>
                 <TextField
                   required
                   id="Card_Name"
@@ -438,6 +467,7 @@ function App() {
                   value={formState.Expiration_Date}
                   onInput={handleFormChange}
                 />
+                <br/>
                 <TextField
                   required
                   id="Billing_Address_1"
