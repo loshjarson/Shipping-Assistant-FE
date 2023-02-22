@@ -407,7 +407,7 @@ function App() {
                 <InputLabel id="Service_Type_label">Service Type</InputLabel>
                 <Select
                   id="Service_Type"
-                  value={formState.Current_Status}
+                  value={formState.Service_Type}
                   labelId="Service_Type_label"
                   label="Service Type"
                   onChange={(e) => {
@@ -427,7 +427,7 @@ function App() {
                 <InputLabel id="Card_Type_label">Card Type</InputLabel>
                 <Select
                   id="Card_Type"
-                  value={formState.Current_Status}
+                  value={formState.Card_Type}
                   labelId="Card_Type_label"
                   label="Card Type"
                   onChange={(e) => {
