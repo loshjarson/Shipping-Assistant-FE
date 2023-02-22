@@ -12,7 +12,8 @@ function createWindow() {
             nodeIntegration: true,
             enableRemoteModule: true,
             contextIsolation: false
-        }
+        },
+        icon:"./sbs logo.png"
     })
     win.loadURL('http://localhost:3000')
 }
