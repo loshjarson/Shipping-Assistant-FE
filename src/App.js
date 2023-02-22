@@ -63,6 +63,7 @@ function App() {
   const [formState, setFormState] = useState(initialFormState);
   const [addressState, setAddress] = useState(addressInitialState);
   const [toCreateState, setToCreateState] = useState(ToCreateInitialState);
+  let bearer = null;
 
   //variable to hold shipment number
   let shipmentNumber = null;
@@ -195,6 +196,30 @@ function App() {
       }
      }
      if(toCreateState.Shipping_Label){
+        var details = {
+          'grant_type': 'client_credentials',
+          'client_id': 'l7dc5aba5c17a64d4fbebd160ca85c3ecf',
+          'client_secret': '878a7def4a894a78967759beb54ee6aa'
+          };
+          
+        var formBody = [];
+        for (var property in details) {
+          var encodedKey = encodeURIComponent(property);
+          var encodedValue = encodeURIComponent(details[property]);
+          formBody.push(encodedKey + "=" + encodedValue);
+        }
+        formBody = formBody.join("&");
+        
+        const auth = await fetch('https://apis-sandbox.fedex.com/oauth/token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+            },
+            body: formBody
+          }).then(res => { return res})
+        bearer = JSON.parse(auth).access_token
+
+
 
       //if shipping label chosen, send request and store response
      }
@@ -395,6 +420,7 @@ function App() {
                   value={formState.Zip_Code}
                   onInput={handleAddressChange}
                 />
+                <br/>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
                     label="Shipping Date"
@@ -418,6 +444,13 @@ function App() {
                   <MenuItem value={'PRIORITY_OVERNIGHT'}>Priority Overnight</MenuItem>
                 </Select>
                 </FormControl>
+                <TextField
+                  required
+                  id="Shipment_Number"
+                  label="Shipment Number"
+                  value={formState.Shipment_Number}
+                  onInput={handleAddressChange}
+                />
               </div>
           </div>
           <div className='cc'>
