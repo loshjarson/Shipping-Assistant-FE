@@ -99,13 +99,6 @@ function App() {
     setToCreateState({...update});
   }
 
-  // edit excel function
-  const editExcel = () => {
-    ipcRenderer.invoke('edit-excel', [formState,addressState,toCreateState])
-      .then((result) => {
-        console.log(result)
-      })
-  }
 
   //handles submission events. pdf form filling, and shipment label request
   const onSubmit = async (event) => {
