@@ -196,6 +196,101 @@ function App() {
       }
      }
      if(toCreateState.Shipping_Label){
+        const fedexReqBody = {
+          mergeLabelDocOption: "LABELS_ONLY",
+          requestedShipment: {
+            shipDatestamp: formState.Shipping_Date.format("YYYY-MM-DD"),
+            totalDeclaredValue: {
+              amount: 400,
+              currency: "USD"
+            },
+            shipper: {
+              address: {
+                streetLines: [
+                  "961 Cayots Canyon Rd"
+                ],
+                city: "Chesapeake City",
+                stateOrProvinceCode: "MD",
+                postalCode: "21915",
+                countryCode: "US",
+              },
+              contact: {
+                emailAddress: "distribution@selectbreeders.com",
+                phoneNumber: "4108853877",
+                companyName: "Select Breeders Services"
+              },
+            },
+            recipients: [
+              {
+                address: {
+                  streetLines: [
+                    addressState.Street_Address
+                  ],
+                  city: addressState.City,
+                  stateOrProvinceCode: addressState.State,
+                  postalCode: addressState.Zip_Code,
+                  countryCode: "US",
+                },
+                contact: {
+                  personName: addressState.Attn,
+                  emailAddress: "sample@company.com",
+                  phoneExtension: "000",
+                  phoneNumber: "XXXX345671",
+                  companyName: addressState.Recipient
+                }
+              }
+            ],
+            pickupType: "USE_SCHEDULED_PICKUP",
+            serviceType: formState.Service_Type,
+            packagingType: "YOUR_PACKAGING",
+            totalWeight: 20,
+            shippingChargesPayment: {
+              paymentType: "SENDER",
+            },
+            shipmentSpecialServices: {
+              specialServiceTypes: [
+                "RETURN_SHIPMENT"
+              ],
+              returnShipmentDetail: {
+                returnAssociationDetail: {
+                  shipDatestamp: formState.Shipping_Date.format("YYYY-MM-DD"),
+                },
+                returnType: "PRINT_RETURN_LABEL"
+              },
+            },
+            labelSpecification: {
+              labelFormatType: "COMMON2D",
+              labelOrder: "SHIPPING_LABEL_FIRST",
+              labelStockType: "STOCK_4X675_LEADING_DOC_TAB",
+              imageType: "ZPLII",
+              labelPrintingOrientation: "BOTTOM_EDGE_OF_TEXT_FIRST",
+            },
+            requestedPackageLineItems: [
+              {
+                customerReferences: [
+                  {
+                    customerReferenceType: "CUSTOMER_REFERENCE",
+                    value: "640/"+ formState.Shipment_Number + "/" + formState.Stallion
+                  }
+                ],
+                declaredValue: {
+                  amount: 400,
+                  currency: "USD"
+                },
+                weight: {
+                  units: "LB",
+                  value: 20
+                },
+              }
+            ]
+          },
+          labelResponseOptions: "LABEL",
+          accountNumber: {
+            value: "740561073"
+          },
+          shipAction: "CONFIRM",
+        }
+
         var details = {
           'grant_type': 'client_credentials',
           'client_id': 'l7dc5aba5c17a64d4fbebd160ca85c3ecf',
@@ -210,15 +305,27 @@ function App() {
         }
         formBody = formBody.join("&");
         
-        const auth = await fetch('https://apis-sandbox.fedex.com/oauth/token', {
+        fetch('https://apis-sandbox.fedex.com/oauth/token', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
             },
             body: formBody
-          }).then(res => { return res})
-        bearer = JSON.parse(auth).access_token
-
+          }).then(res => { 
+            bearer = JSON.parse(res).access_token;
+            fetch('https://apis-sandbox.fedex.com/ship/v1/shipments', {
+              method: 'POST',
+              headers: {
+                'authorization': "bearer " + bearer
+              },
+              body: JSON.stringify(fedexReqBody)
+            })
+              .then(resp => {
+                fedExPDFBytes = resp.output.transactionShipments.shipmentDocuments[0].url
+              })
+          })
+        
+        
 
 
       //if shipping label chosen, send request and store response
@@ -270,21 +377,18 @@ function App() {
             <h3>Mare Owner Information</h3>
               <div className='info'>
                 <TextField
-                  required
                   id="Mare_Owner"
                   label="Mare Owner Name"
                   value={formState.Mare_Owner}
                   onInput={handleFormChange}
                 />
                 <TextField
-                  required
                   id="Mare_Phone"
                   label="Mare Owner Phone"
                   value={formState.Mare_Phone}
                   onInput={handleFormChange}
                 />
                 <TextField
-                  required
                   id="Mare_Email"
                   label="Mare Owner Email"
                   value={formState.Mare_Email}
@@ -296,28 +400,24 @@ function App() {
             <h3>Mare Information</h3>
               <div className='info'>
                 <TextField
-                  required
                   id="Mare_Name"
                   label="Name"
                   value={formState.Mare_Name}
                   onInput={handleFormChange}
                 />
                 <TextField
-                  required
                   id="Birth_Year"
                   label="Birth Year"
                   value={formState.Birth_Year}
                   onInput={handleFormChange}
                 />
                 <TextField
-                  required
                   id="Breed"
                   label="Breed"
                   value={formState.Breed}
                   onInput={handleFormChange}
                 />
                 <TextField
-                  required
                   id="Registration"
                   label="Registration #"
                   value={formState.Registration}
@@ -346,21 +446,18 @@ function App() {
             <h3>Stallion Information</h3>
               <div className='info'>
                 <TextField
-                  required
                   id="Stallion"
                   label="Stallion"
                   value={formState.Stallion}
                   onInput={handleFormChange}
                 />
                 <TextField
-                  required
                   id="Stallion_Owner"
                   label="Stallion Owner"
                   value={formState.Stallion_Owner}
                   onInput={handleFormChange}
                 />
                 <TextField
-                  required
                   id="Doses"
                   label="Doses"
                   value={formState.Doses}
@@ -372,49 +469,42 @@ function App() {
             <h3>Recipient Information</h3>
               <div className='info'>
                 <TextField
-                  required
                   id="Recipient"
                   label="Recipient/Company"
                   value={formState.Recipient}
                   onInput={handleAddressChange}
                 />
                 <TextField
-                  required
                   id="Attn"
                   label="Attention"
                   value={formState.Attn}
                   onInput={handleAddressChange}
                 />
                 <TextField
-                  required
                   id="Recipient_Address"
                   label="Recipient Address"
                   value={formState.Recipient_Address}
                   onInput={handleAddressChange}
                 />
                 <TextField
-                  required
                   id="Street_Address"
                   label="Street Address"
                   value={formState.Street_Address}
                   onInput={handleAddressChange}
                 />
                 <TextField
-                  required
                   id="City"
                   label="City"
                   value={formState.City}
                   onInput={handleAddressChange}
                 />
                 <TextField
-                  required
                   id="State"
                   label="State"
                   value={formState.State}
                   onInput={handleAddressChange}
                 />
                 <TextField
-                  required
                   id="Zip_Code"
                   label="Zip Code"
                   value={formState.Zip_Code}
@@ -445,7 +535,6 @@ function App() {
                 </Select>
                 </FormControl>
                 <TextField
-                  required
                   id="Shipment_Number"
                   label="Shipment Number"
                   value={formState.Shipment_Number}
@@ -473,28 +562,24 @@ function App() {
                 </FormControl>
                 <br/>
                 <TextField
-                  required
                   id="Card_Name"
                   label="Card Name"
                   value={formState.Card_Name}
                   onInput={handleFormChange}  
                 />
                 <TextField
-                  required
                   id="Card_Number"
                   label="Card Number"
                   value={formState.Card_Number}
                   onInput={handleFormChange}
                 />
                 <TextField
-                  required
                   id="Security_Code"
                   label="Security Code"
                   value={formState.Security_Code}
                   onInput={handleFormChange}
                 />
                 <TextField
-                  required
                   id="Expiration_Date"
                   label="Expiration Date"
                   value={formState.Expiration_Date}
@@ -502,21 +587,18 @@ function App() {
                 />
                 <br/>
                 <TextField
-                  required
                   id="Billing_Address_1"
                   label="Billing Address 1"
                   value={formState.Billing_Address_1}
                   onInput={handleFormChange}
                 />
                 <TextField
-                  required
                   id="Billing_Address_2"
                   label="Billing Address 2"
                   value={formState.Billing_Address_2}
                   onInput={handleFormChange}
                 />
                 <TextField
-                  required
                   id="Billing_Address_3"
                   label="Billing Address 3"
                   value={formState.Billing_Address_3}
