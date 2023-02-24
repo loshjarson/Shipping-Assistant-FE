@@ -9,6 +9,7 @@ import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf';
 import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
 import CompPdf from './Assets/Company_Or_Recipient_Label.pdf';
 
+
 //ipc renderer allows to send requests to electron main file
 const ipcRenderer = window.require("electron").ipcRenderer;
 
@@ -64,6 +65,7 @@ function App() {
   const [addressState, setAddress] = useState(addressInitialState);
   const [toCreateState, setToCreateState] = useState(ToCreateInitialState);
   let bearer = null;
+  let authTime = null;
 
   //variable to hold shipment number
   let shipmentNumber = null;
@@ -117,8 +119,11 @@ function App() {
             const checkbox = form.getCheckBox(formState[input])
             checkbox.check()
           } else if (input === "Card_Type") {
-            const checkbox = form.getCheckBox(formState[input])
-            checkbox.check()
+            if(formState[input]){
+              const checkbox = form.getCheckBox(formState[input])
+              checkbox.check()
+            }
+            
           } else{
           const field = form.getTextField(input);
           if(input === "Shipping_Date") {
@@ -284,46 +289,22 @@ function App() {
               }
             ]
           },
-          labelResponseOptions: "LABEL",
+          labelResponseOptions: "URL_ONLY",
           accountNumber: {
             value: "740561073"
           },
           shipAction: "CONFIRM",
         }
-
-        var details = {
-          'grant_type': 'client_credentials',
-          'client_id': 'l7dc5aba5c17a64d4fbebd160ca85c3ecf',
-          'client_secret': '878a7def4a894a78967759beb54ee6aa'
-          };
-          
-        var formBody = [];
-        for (var property in details) {
-          var encodedKey = encodeURIComponent(property);
-          var encodedValue = encodeURIComponent(details[property]);
-          formBody.push(encodedKey + "=" + encodedValue);
+        const now = Date.now()
+        if(!bearer || (now-authTime)/1000 > 3599){
+          console.log(now,authTime)
+          console.log(now-authTime)
+          const authInfo = await ipcRenderer.invoke('get-fedex-auth')
+          authTime = Date.now()
+          bearer = authInfo.bearer;
         }
-        formBody = formBody.join("&");
-        
-        fetch('https://apis-sandbox.fedex.com/oauth/token', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-            },
-            body: formBody
-          }).then(res => { 
-            bearer = JSON.parse(res).access_token;
-            fetch('https://apis-sandbox.fedex.com/ship/v1/shipments', {
-              method: 'POST',
-              headers: {
-                'authorization': "bearer " + bearer
-              },
-              body: JSON.stringify(fedexReqBody)
-            })
-              .then(resp => {
-                fedExPDFBytes = resp.output.transactionShipments.shipmentDocuments[0].url
-              })
-          })
+
+
         
         
 
@@ -538,7 +519,7 @@ function App() {
                   id="Shipment_Number"
                   label="Shipment Number"
                   value={formState.Shipment_Number}
-                  onInput={handleAddressChange}
+                  onInput={handleFormChange}
                 />
               </div>
           </div>
