@@ -212,7 +212,7 @@ function App() {
           bearer = authInfo.bearer;
         }
         const labels = await ipcRenderer.invoke('get-fedex-labels', bearer, formState, addressState)
-        
+        console.log(labels)
         
         
 
