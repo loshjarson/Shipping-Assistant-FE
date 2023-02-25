@@ -8,6 +8,7 @@ import { PDFDocument } from 'pdf-lib';
 import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf';
 import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
 import CompPdf from './Assets/Company_Or_Recipient_Label.pdf';
+import printJS from 'print-js';
 
 
 //ipc renderer allows to send requests to electron main file
@@ -74,7 +75,8 @@ function App() {
   //form variables that will be served
   let requestPDFBytes = null;
   let pTouchPDFBytes = null;
-  let fedExPDFBytes = null;
+  let outPDFBytes = null;
+  let returnPDFBytes = null;
 
   //handles changes made to normal form inputs
   const handleFormChange = (event) => {
@@ -234,6 +236,7 @@ function App() {
         }}
         noValidate
         autoComplete="off"
+        onSubmit={e => {e.preventDefault()}}
       >
         <div>
           <FormControlLabel
@@ -512,6 +515,12 @@ function App() {
           </div>
           <Button variant="contained" onClick={onSubmit}>Submit</Button>
         </div>
+      </Box>
+      <Box>
+        {requestPDFBytes ? <Button variant="contained" onClick={printJS(requestPDFBytes)} >Print Request Form</Button> : null}
+        {pTouchPDFBytes ? <Button variant="contained" onClick={printJS(pTouchPDFBytes)} >Print PTouch</Button> : null}
+        {outPDFBytes ? <Button variant="contained" onClick={printJS(outPDFBytes)} >Print Outbound Label</Button> : null}
+        {returnPDFBytes ? <Button variant="contained" onClick={printJS(returnPDFBytes)} >Print Return Label</Button> : null}
       </Box>
     </div>
   );
