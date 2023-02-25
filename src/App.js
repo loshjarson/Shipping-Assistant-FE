@@ -37,6 +37,8 @@ const initialFormState = {
   Billing_Address_2: "",
   Billing_Address_3: "",
   Service_Type: "",
+  Recipient_Email:"",
+  Recipient_Phone:""
 }
 
 //initial state for shipping address
@@ -48,7 +50,6 @@ const addressInitialState = {
   City: "",
   State: "",
   Zip_Code: "",
-  Recipient_Phone: "",
 }
 
 //initial state for forms the user wants to create
@@ -201,100 +202,7 @@ function App() {
       }
      }
      if(toCreateState.Shipping_Label){
-        const fedexReqBody = {
-          mergeLabelDocOption: "LABELS_ONLY",
-          requestedShipment: {
-            shipDatestamp: formState.Shipping_Date.format("YYYY-MM-DD"),
-            totalDeclaredValue: {
-              amount: 400,
-              currency: "USD"
-            },
-            shipper: {
-              address: {
-                streetLines: [
-                  "961 Cayots Canyon Rd"
-                ],
-                city: "Chesapeake City",
-                stateOrProvinceCode: "MD",
-                postalCode: "21915",
-                countryCode: "US",
-              },
-              contact: {
-                emailAddress: "distribution@selectbreeders.com",
-                phoneNumber: "4108853877",
-                companyName: "Select Breeders Services"
-              },
-            },
-            recipients: [
-              {
-                address: {
-                  streetLines: [
-                    addressState.Street_Address
-                  ],
-                  city: addressState.City,
-                  stateOrProvinceCode: addressState.State,
-                  postalCode: addressState.Zip_Code,
-                  countryCode: "US",
-                },
-                contact: {
-                  personName: addressState.Attn,
-                  emailAddress: "sample@company.com",
-                  phoneExtension: "000",
-                  phoneNumber: "XXXX345671",
-                  companyName: addressState.Recipient
-                }
-              }
-            ],
-            pickupType: "USE_SCHEDULED_PICKUP",
-            serviceType: formState.Service_Type,
-            packagingType: "YOUR_PACKAGING",
-            totalWeight: 20,
-            shippingChargesPayment: {
-              paymentType: "SENDER",
-            },
-            shipmentSpecialServices: {
-              specialServiceTypes: [
-                "RETURN_SHIPMENT"
-              ],
-              returnShipmentDetail: {
-                returnAssociationDetail: {
-                  shipDatestamp: formState.Shipping_Date.format("YYYY-MM-DD"),
-                },
-                returnType: "PRINT_RETURN_LABEL"
-              },
-            },
-            labelSpecification: {
-              labelFormatType: "COMMON2D",
-              labelOrder: "SHIPPING_LABEL_FIRST",
-              labelStockType: "STOCK_4X675_LEADING_DOC_TAB",
-              imageType: "ZPLII",
-              labelPrintingOrientation: "BOTTOM_EDGE_OF_TEXT_FIRST",
-            },
-            requestedPackageLineItems: [
-              {
-                customerReferences: [
-                  {
-                    customerReferenceType: "CUSTOMER_REFERENCE",
-                    value: "640/"+ formState.Shipment_Number + "/" + formState.Stallion
-                  }
-                ],
-                declaredValue: {
-                  amount: 400,
-                  currency: "USD"
-                },
-                weight: {
-                  units: "LB",
-                  value: 20
-                },
-              }
-            ]
-          },
-          labelResponseOptions: "URL_ONLY",
-          accountNumber: {
-            value: "740561073"
-          },
-          shipAction: "CONFIRM",
-        }
+
         const now = Date.now()
         if(!bearer || (now-authTime)/1000 > 3599){
           console.log(now,authTime)
@@ -303,8 +211,8 @@ function App() {
           authTime = Date.now()
           bearer = authInfo.bearer;
         }
-
-
+        const labels = await ipcRenderer.invoke('get-fedex-labels', bearer, formState, addressState)
+        
         
         
 
@@ -461,12 +369,14 @@ function App() {
                   value={formState.Attn}
                   onInput={handleAddressChange}
                 />
+                <br/>
                 <TextField
                   id="Recipient_Address"
                   label="Recipient Address"
                   value={formState.Recipient_Address}
                   onInput={handleAddressChange}
                 />
+                <br/>
                 <TextField
                   id="Street_Address"
                   label="Street Address"
@@ -491,6 +401,19 @@ function App() {
                   value={formState.Zip_Code}
                   onInput={handleAddressChange}
                 />
+                <TextField
+                  id="Recipient_Phone"
+                  label="Recipient Phone"
+                  value={formState.Recipient_Phone}
+                  onInput={handleFormChange}
+                />
+                <TextField
+                  id="Recipient_Email"
+                  label="Recipient Email"
+                  value={formState.Recipient_Email}
+                  onInput={handleFormChange}
+                />
+                
                 <br/>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
