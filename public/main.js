@@ -227,14 +227,11 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
         },
         'shipAction': "CONFIRM",
       }
-    const jsonOut = JSON.stringify(fedexOutBody)
-    const jsonRet = JSON.stringify(fedexRetBody)
     const outboundLabelRes = await axios.post(shippingUrl,fedexOutBody,{headers: {'authorization':'bearer ' + args[0]}}).catch(e => console.log(e))
     const returnLabelRes = await axios.post(shippingUrl,fedexRetBody,{headers: {'authorization':'bearer ' + args[0]}}).catch(e => console.log(e))
         .catch(err => {
             console.log(err)
         })
-    console.log(outboundLabelRes,returnLabelRes)
     const outboundLabel = JSON.parse(outboundLabelRes).data.output.transactionShipments[0].pieceResponses[0].packageDocuments.encodedLabel
     const returnLabel = JSON.parse(returnLabelRes).data.output.transactionShipments[0].pieceResponses[0].packageDocuments.encodedLabel
     return {outboundLabel, returnLabel}
