@@ -118,23 +118,24 @@ function App() {
         const form = pdfDoc.getForm();
         //sets text field to be value of form inputs
         Object.keys(formState).forEach(input => {
-          if (input === "Service_Type"){
-            const checkbox = form.getCheckBox(formState[input])
-            checkbox.check()
-          } else if (input === "Card_Type") {
-            if(formState[input]){
+          if (formState[input]){
+            if (input === "Service_Type"){
               const checkbox = form.getCheckBox(formState[input])
               checkbox.check()
-            }
-            
-          } else{
-          const field = form.getTextField(input);
-          if(input === "Shipping_Date") {
-            field.setText(formState[input].format('MM/DD/YYYY'))
-          } else {
-           field.setText(formState[input]) 
+            } else if (input === "Card_Type") {
+              if(formState[input]){
+                const checkbox = form.getCheckBox(formState[input])
+                checkbox.check()
+              }
+            } else{
+              const field = form.getTextField(input);
+              if(input === "Shipping_Date" && formState[input]) {
+                field.setText(formState[input].format('MM/DD/YYYY'))
+              } else {
+              field.setText(formState[input]) 
+              }
+            } 
           }
-        }
           
         })
 
@@ -357,8 +358,8 @@ function App() {
                 />
               </div>
           </div>
-          <div className='recipient'>
-            <h3>Recipient Information</h3>
+          <div className='shipment'>
+            <h3>Shipment Information</h3>
               <div className='info'>
                 <TextField
                   id="Recipient"
