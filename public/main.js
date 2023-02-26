@@ -234,8 +234,8 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
         })
     const codedOutLabel = Buffer.from(JSON.parse(outboundLabelRes).data.output.transactionShipments[0].pieceResponses[0].packageDocuments.encodedLabel, "base64");
     const codedReturnLabel = Buffer.from(JSON.parse(returnLabelRes).data.output.transactionShipments[0].pieceResponses[0].packageDocuments.encodedLabel, "base64");
-    const decodedOutLabel = codedoutLabel.toString("utf8");
-    const decodedReturnLabel = codedreturnLabel.toString("utf8");
+    const decodedOutLabel = codedOutLabel.toString("utf8");
+    const decodedReturnLabel = codedReturnLabel.toString("utf8");
     const outboundLabel = await axios.get("http://api.labelary.com/v1/printers/8dpmm/labels/4x6.75/0/"+decodedOutLabel,{Accept:"application/pdf"}).catch(e => console.log(e))
     const returnLabel = await axios.get("http://api.labelary.com/v1/printers/8dpmm/labels/4x6.75/0/"+decodedReturnLabel,{Accept:"application/pdf"}).catch(e => console.log(e))
     return {outboundLabel, returnLabel}
