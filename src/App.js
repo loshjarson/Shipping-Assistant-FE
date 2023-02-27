@@ -405,7 +405,7 @@ function App() {
                     </Form.Item>
                   </Col>
                 </Row>
-                <Row justify={"center"}>
+                {/* <Row justify={"center"}>
                   <Col span={15}>
                     <Form.Item label="Recipient Address:">
                       <Input
@@ -415,7 +415,7 @@ function App() {
                       />
                     </Form.Item>
                   </Col>
-                </Row>
+                </Row> */}
                 <Row justify={"center"} gutter={[10]}>
                   <Col span={7}>
                     <Form.Item 
