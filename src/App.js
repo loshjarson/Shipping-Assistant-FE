@@ -6,6 +6,7 @@ import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
 import CompPdf from './Assets/Company_Or_Recipient_Label.pdf';
 import printJS from 'print-js';
 import { Input, Checkbox, Form, Col, Row, Select, Button, DatePicker } from 'antd'
+import { useForm } from 'antd/es/form/Form';
 
 
 //ipc renderer allows to send requests to electron main file
@@ -64,6 +65,7 @@ function App() {
   const [toCreateState, setToCreateState] = useState(ToCreateInitialState);
   let bearer = null;
   let authTime = null;
+  const [antForm] = useForm();
 
   //form variables that will be served
   let requestPDFBytes = null;
@@ -99,6 +101,12 @@ function App() {
     setToCreateState({...update});
   }
 
+  const resetForm = () => {
+    setFormState({...initialFormState});
+    setAddress({...addressInitialState});
+    setToCreateState({...ToCreateInitialState});
+    antForm.resetFields();
+  }
 
   //handles submission events. pdf form filling, and shipment label request
   const onSubmit = async (event) => {
@@ -235,7 +243,7 @@ function App() {
               onChange={handleCreateChange}
               >Shipping Labels</Checkbox>
         </div>
-        <Form layout="vertical" style={{maxWidth:"50rem",margin:"auto"}} onFinish={onSubmit}>
+        <Form layout="vertical" style={{maxWidth:"50rem",margin:"auto"}} onFinish={onSubmit} form={antForm}>
           <div className='mare-owner'>
             <h3>Mare Owner Information</h3>
               <div className='info' id="mare-owner-info">
@@ -499,8 +507,8 @@ function App() {
                     </Form.Item>
                   </Col> 
                 </Row>
-                <Row gutter={[10]}>
-                  <Col span={8}>
+                <Row gutter={[10]} justify={"center"}>
+                  <Col span={5}>
                     <Form.Item 
                       label="Shipping Date" 
                       name="Shipping Date"
@@ -647,11 +655,16 @@ function App() {
               Submit
             </Button>
           </Form.Item>
+          <Form.Item>
+            <Button type="default" onClick={resetForm}>
+              Reset
+            </Button>
+          </Form.Item>
         </Form>
-        {requestPDFBytes ? <Button variant="contained" onClick={printJS(requestPDFBytes)} >Print Request Form</Button> : null}
-        {pTouchPDFBytes ? <Button variant="contained" onClick={printJS(pTouchPDFBytes)} >Print PTouch</Button> : null}
-        {outPDFBytes ? <Button variant="contained" onClick={printJS(outPDFBytes)} >Print Outbound Label</Button> : null}
-        {returnPDFBytes ? <Button variant="contained" onClick={printJS(returnPDFBytes)} >Print Return Label</Button> : null}
+        {requestPDFBytes ? <Button default="default" onClick={printJS(requestPDFBytes)} >Print Request Form</Button> : null}
+        {pTouchPDFBytes ? <Button default="default" onClick={printJS(pTouchPDFBytes)} >Print PTouch</Button> : null}
+        {outPDFBytes ? <Button default="default" onClick={printJS(outPDFBytes)} >Print Outbound Label</Button> : null}
+        {returnPDFBytes ? <Button default="default" onClick={printJS(returnPDFBytes)} >Print Return Label</Button> : null}
     </div>
   );
 }
