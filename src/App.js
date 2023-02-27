@@ -1,14 +1,11 @@
 import './App.css';
 import { useState } from 'react';
-import { TextField, Select, MenuItem, Checkbox, FormControlLabel, Button, Box, InputLabel, FormControl} from '@mui/material';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { PDFDocument } from 'pdf-lib';
 import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf';
 import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
 import CompPdf from './Assets/Company_Or_Recipient_Label.pdf';
 import printJS from 'print-js';
+import { Input, Checkbox, Form, Col, Row, Select, Button, DatePicker } from 'antd'
 
 
 //ipc renderer allows to send requests to electron main file
@@ -16,49 +13,48 @@ const ipcRenderer = window.require("electron").ipcRenderer;
 
 //initial for form inputs minus shipping address
 const initialFormState = {
-  Shipment_Number: "",
-  Mare_Owner: "",
-  Mare_Phone: "",
-  Mare_Email: "",
-  Mare_Name: "",
-  Birth_Year: "",
-  Breed: "",
-  Registration: "",
-  Current_Status: "",
-  Stallion:"",
-  Stallion_Owner:"",
-  Doses:"",
+  Shipment_Number: null,
+  Mare_Owner: null,
+  Mare_Phone: null,
+  Mare_Email: null,
+  Mare_Name: null,
+  Birth_Year: null,
+  Breed: null,
+  Registration: null,
+  Current_Status: null,
+  Stallion:null,
+  Stallion_Owner:null,
+  Doses:null,
   Shipping_Date: null,
-  Card_Type: "",
-  Card_Name: "",
-  Card_Number: "",
-  Security_Code: "",
-  Expiration_Date: "",
-  Billing_Address_1: "",
-  Billing_Address_2: "",
-  Billing_Address_3: "",
-  Service_Type: "",
-  Recipient_Email:"",
-  Recipient_Phone:""
+  Card_Type: null,
+  Card_Name: null,
+  Card_Number: null,
+  Security_Code: null,
+  Expiration_Date: null,
+  Billing_Address_1: null,
+  Billing_Address_2: null,
+  Billing_Address_3: null,
+  Service_Type: null,
+  Recipient_Email:null,
+  Recipient_Phone:null
 }
 
 //initial state for shipping address
 const addressInitialState = {
-  Recipient:"",
-  Attn: "",
-  Recipient_Address: "",
-  Street_Address: "",
-  City: "",
-  State: "",
-  Zip_Code: "",
+  Recipient:null,
+  Attn: null,
+  Recipient_Address: null,
+  Street_Address: null,
+  City: null,
+  State: null,
+  Zip_Code: null,
 }
 
 //initial state for forms the user wants to create
 const ToCreateInitialState = {
   Shipment_Request: true,
   PTouch_Label: true,
-  Shipping_Label: true,
-  Excel:true, 
+  Shipping_Label: true, 
 }
 
 
@@ -68,9 +64,6 @@ function App() {
   const [toCreateState, setToCreateState] = useState(ToCreateInitialState);
   let bearer = null;
   let authTime = null;
-
-  //variable to hold shipment number
-  let shipmentNumber = null;
 
   //form variables that will be served
   let requestPDFBytes = null;
@@ -128,6 +121,7 @@ function App() {
                 checkbox.check()
               }
             } else{
+              console.log(input)
               const field = form.getTextField(input);
               if(input === "Shipping_Date" && formState[input]) {
                 field.setText(formState[input].format('MM/DD/YYYY'))
@@ -204,23 +198,17 @@ function App() {
       
       }
      }
+     //if shipping label chosen, send request and store response
      if(toCreateState.Shipping_Label){
-
+        //check if bearer token is current
         const now = Date.now()
         if(!bearer || (now-authTime)/1000 > 3599){
-          console.log(now,authTime)
-          console.log(now-authTime)
           const authInfo = await ipcRenderer.invoke('get-fedex-auth')
           authTime = Date.now()
           bearer = authInfo.bearer;
         }
         const labels = await ipcRenderer.invoke('get-fedex-labels', bearer, formState, addressState)
         console.log(labels)
-        
-        
-
-
-      //if shipping label chosen, send request and store response
      }
      
   }
@@ -230,299 +218,440 @@ function App() {
       <header className="App-header">
         <h1>Shipment Assistant</h1>
       </header>
-      <Box
-        component="form"
-        sx={{
-          '& .MuiTextField-root': { m: 1, width: '25ch' },
-        }}
-        noValidate
-        autoComplete="off"
-        onSubmit={e => {e.preventDefault()}}
-      >
         <div>
-          <FormControlLabel
-            label="Shipment Request"
-            control={<Checkbox
+            <Checkbox
               id='Shipment_Request'
               checked={toCreateState.Shipment_Request}
               onChange={handleCreateChange}
-              />}
-          />
-          <FormControlLabel
-            label="PTouch Label"
-            control={<Checkbox
+              >Shipment Request</Checkbox>
+            <Checkbox
               id='PTouch_Label'
               checked={toCreateState.PTouch_Label}
               onChange={handleCreateChange}
-              />}
-          />
-          <FormControlLabel
-            label="Shipping Label"
-            control={<Checkbox
+              >PTouch Label</Checkbox>
+            <Checkbox
               id='Shipping_Label'
               checked={toCreateState.Shipping_Label}
               onChange={handleCreateChange}
-              />}
-          />
+              >Shipping Labels</Checkbox>
         </div>
-        <div id="form">
+        <Form layout="vertical" style={{maxWidth:"50rem",margin:"auto"}} onFinish={onSubmit}>
           <div className='mare-owner'>
             <h3>Mare Owner Information</h3>
-              <div className='info'>
-                <TextField
-                  id="Mare_Owner"
-                  label="Mare Owner Name"
-                  value={formState.Mare_Owner}
-                  onInput={handleFormChange}
-                />
-                <TextField
-                  id="Mare_Phone"
-                  label="Mare Owner Phone"
-                  value={formState.Mare_Phone}
-                  onInput={handleFormChange}
-                />
-                <TextField
-                  id="Mare_Email"
-                  label="Mare Owner Email"
-                  value={formState.Mare_Email}
-                  onInput={handleFormChange}
-                />
+              <div className='info' id="mare-owner-info">
+                <Row justify={'center'} gutter={[10]}>
+                  <Col span={7}>
+                    <Form.Item label="Mare Owner Name:">
+                      <Input
+                        id="Mare_Owner"
+                        value={formState.Mare_Owner}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={7}>
+                    <Form.Item label="Mare Owner Phone:">
+                      <Input
+                        id="Mare_Phone"
+                        value={formState.Mare_Phone}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={7}>
+                    <Form.Item label="Mare Owner Email:">
+                      <Input
+                        id="Mare_Email"
+                        value={formState.Mare_Email}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
               </div>
           </div>
           <div className='mare'>
             <h3>Mare Information</h3>
-              <div className='info'>
-                <TextField
-                  id="Mare_Name"
-                  label="Name"
-                  value={formState.Mare_Name}
-                  onInput={handleFormChange}
-                />
-                <TextField
-                  id="Birth_Year"
-                  label="Birth Year"
-                  value={formState.Birth_Year}
-                  onInput={handleFormChange}
-                />
-                <TextField
-                  id="Breed"
-                  label="Breed"
-                  value={formState.Breed}
-                  onInput={handleFormChange}
-                />
-                <TextField
-                  id="Registration"
-                  label="Registration #"
-                  value={formState.Registration}
-                  onInput={handleFormChange}
-                />
-                <FormControl sx={{ m: 1, minWidth: 120 }}>
-                <InputLabel id="Current_Status_label">Current Status</InputLabel>
-                <Select
-                  id="Current_Status"
-                  value={formState.Current_Status}
-                  labelId="Current_Status_label"
-                  label="Current Status"
-                  onChange={(e) => {
-                    handleFormChange({target:{value:e.target.value,id:"Current_Status"}})
-                  }}
-                >
-                  <MenuItem value={'Maiden'}>Maiden</MenuItem>
-                  <MenuItem value={'Foaled'}>Foaled</MenuItem>
-                  <MenuItem value={'Barren'}>Barren</MenuItem>
-                  <MenuItem value={'Not Bred'}>Not Bred</MenuItem>
-                </Select>
-                </FormControl>
+              <div className='info' id="mare-info">
+                <Row gutter={[10]}>
+                  <Col span={8}>
+                    <Form.Item label="Name:">
+                      <Input
+                        id="Mare_Name"
+                        value={formState.Mare_Name}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item label="Birth Year:">
+                      <Input
+                        id="Birth_Year"
+                        value={formState.Birth_Year}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item label="Breed:">
+                      <Input
+                        id="Breed"
+                        value={formState.Breed}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  </Row>
+                  <Row justify={"center"} gutter={[10]}>
+                    <Col span={8}>
+                      <Form.Item label="Registration #:">
+                        <Input
+                          id="Registration"
+                          value={formState.Registration}
+                          onInput={handleFormChange}
+                        />
+                      </Form.Item>
+                    </Col>
+                  <Col span={8}>
+                    <Form.Item label="Current Status:">
+                      <Select
+                        value={formState.Current_Status}
+                        id="Current_Status"
+                        onChange={(v) => {
+                            handleFormChange({target:{value:v,id:"Current_Status"}})
+                          }}
+                        options={[
+                          {value: 'Maiden', label: "Maiden"},
+                          {value: 'Foaled', label: "Foaled"},
+                          {value: 'Barren', label: "Barren"},
+                          {value: 'Not Bred', label: "Not Bred"}
+                        ]}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
               </div>
           </div>
           <div className='stallion'>
             <h3>Stallion Information</h3>
-              <div className='info'>
-                <TextField
-                  id="Stallion"
-                  label="Stallion"
-                  value={formState.Stallion}
-                  onInput={handleFormChange}
-                />
-                <TextField
-                  id="Stallion_Owner"
-                  label="Stallion Owner"
-                  value={formState.Stallion_Owner}
-                  onInput={handleFormChange}
-                />
-                <TextField
-                  id="Doses"
-                  label="Doses"
-                  value={formState.Doses}
-                  onInput={handleFormChange}
-                />
+              <div className='info' id="stallion-info">
+                <Row gutter={[10]}>
+                  <Col span={8}>
+                    <Form.Item label="Stallion:">
+                      <Input
+                        id="Stallion"
+                        
+                        value={formState.Stallion}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item label="Stallion Owner:">
+                      <Input
+                        id="Stallion_Owner"
+                        
+                        value={formState.Stallion_Owner}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item label="Doses:">
+                      <Input
+                        id="Doses"
+                        value={formState.Doses}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
               </div>
           </div>
           <div className='shipment'>
             <h3>Shipment Information</h3>
-              <div className='info'>
-                <TextField
-                  id="Recipient"
-                  label="Recipient/Company"
-                  value={formState.Recipient}
-                  onInput={handleAddressChange}
-                />
-                <TextField
-                  id="Attn"
-                  label="Attention"
-                  value={formState.Attn}
-                  onInput={handleAddressChange}
-                />
-                <br/>
-                <TextField
-                  id="Recipient_Address"
-                  label="Recipient Address"
-                  value={formState.Recipient_Address}
-                  onInput={handleAddressChange}
-                />
-                <br/>
-                <TextField
-                  id="Street_Address"
-                  label="Street Address"
-                  value={formState.Street_Address}
-                  onInput={handleAddressChange}
-                />
-                <TextField
-                  id="City"
-                  label="City"
-                  value={formState.City}
-                  onInput={handleAddressChange}
-                />
-                <TextField
-                  id="State"
-                  label="State"
-                  value={formState.State}
-                  onInput={handleAddressChange}
-                />
-                <TextField
-                  id="Zip_Code"
-                  label="Zip Code"
-                  value={formState.Zip_Code}
-                  onInput={handleAddressChange}
-                />
-                <TextField
-                  id="Recipient_Phone"
-                  label="Recipient Phone"
-                  value={formState.Recipient_Phone}
-                  onInput={handleFormChange}
-                />
-                <TextField
-                  id="Recipient_Email"
-                  label="Recipient Email"
-                  value={formState.Recipient_Email}
-                  onInput={handleFormChange}
-                />
-                
-                <br/>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    label="Shipping Date"
-                    value={formState.Shipping_Date}
-                    onChange={handleFormChange}
-                    renderInput={(params) => <TextField {...params} />}
-                  />
-                </LocalizationProvider>
-                <FormControl sx={{ m: 1, minWidth: 120 }}>
-                <InputLabel id="Service_Type_label">Service Type</InputLabel>
-                <Select
-                  id="Service_Type"
-                  value={formState.Service_Type}
-                  labelId="Service_Type_label"
-                  label="Service Type"
-                  onChange={(e) => {
-                    handleFormChange({target:{value:e.target.value,id:"Service_Type"}})
-                  }}
-                >
-                  <MenuItem value={'FEDEX_2_DAY'}>2 Day</MenuItem>
-                  <MenuItem value={'PRIORITY_OVERNIGHT'}>Priority Overnight</MenuItem>
-                </Select>
-                </FormControl>
-                <TextField
-                  id="Shipment_Number"
-                  label="Shipment Number"
-                  value={formState.Shipment_Number}
-                  onInput={handleFormChange}
-                />
+              <div className='info' id="shipment-info">
+                <Row justify={"center"} gutter={[10]}>
+                  <Col span={8}>
+                    <Form.Item 
+                      label="Recipient/Company:"
+                      name="Recipient"
+                      rules={[{
+                      required: toCreateState.PTouch_Label,
+                      message: 'Recipient name is required (Attn. is not)'
+                      }]}>
+                      <Input
+                        id="Recipient"
+                        value={formState.Recipient}
+                        onInput={handleAddressChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item label="Attention:">
+                      <Input
+                        id="Attn"
+                        value={formState.Attn}
+                        onInput={handleAddressChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row justify={"center"}>
+                  <Col span={15}>
+                    <Form.Item label="Recipient Address:">
+                      <Input
+                        id="Recipient_Address"
+                        value={formState.Recipient_Address}
+                        onInput={handleAddressChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row justify={"center"} gutter={[10]}>
+                  <Col span={7}>
+                    <Form.Item 
+                      label="Street Address:"
+                      name="Street Address"
+                      rules={[{
+                      required: toCreateState.PTouch_Label,
+                      message: "Recipient address is required"
+                    }]}>
+                      <Input
+                        id="Street_Address"
+                        value={formState.Street_Address}
+                        onInput={handleAddressChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={7}>
+                    <Form.Item 
+                      label="City:"
+                      name="City"
+                      rules={[{
+                      required: toCreateState.PTouch_Label,
+                      message: "City is required"
+                    }]}>
+                      <Input
+                        id="City"
+                        value={formState.City}
+                        onInput={handleAddressChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={2}>
+                    <Form.Item 
+                      label="State:"
+                      name="State"
+                      rules={[{
+                      required: toCreateState.PTouch_Label,
+                      message: "State is required"
+                    }]}>
+                      <Input
+                        id="State"
+                        value={formState.State}
+                        onInput={handleAddressChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={6}>
+                    <Form.Item 
+                      label="Zip Code:"
+                      name="Zip Code"
+                      rules={[{
+                      required: toCreateState.PTouch_Label,
+                      message: "Zip code is required"
+                    }]}>
+                      <Input
+                        id="Zip_Code"
+                        value={formState.Zip_Code}
+                        onInput={handleAddressChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row justify={"center"} gutter={[10]}>
+                  <Col span={8}>
+                    <Form.Item 
+                      label="Recipient Phone:"
+                      name="Recipient Phone"
+                      rules={[{
+                      required: true,
+                      message: "Zip code is required"
+                    }]}>
+                      <Input
+                        id="Recipient_Phone"
+                        value={formState.Recipient_Phone}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item
+                      label="Recipient Email:"
+                      name="Recipient Email"
+                    >
+                      <Input
+                        id="Recipient_Email"
+                        value={formState.Recipient_Email}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col> 
+                </Row>
+                <Row gutter={[10]}>
+                  <Col span={8}>
+                    <Form.Item 
+                      label="Shipping Date" 
+                      name="Shipping Date"
+                      rules={[{
+                        required: toCreateState.PTouch_Label,
+                        message: "Shipping Date is required"
+                    }]}>
+                        <DatePicker
+                          value={formState.Shipping_Date}
+                          onChange={e => handleFormChange({value:e,id:"Shipping_Date"})}
+                        />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item 
+                      label="Service Type:" 
+                      name="Service Type"
+                      rules={[{
+                        required: toCreateState.PTouch_Label,
+                        message: "Service Type is required"
+                    }]}>
+                    <Select
+                        value={formState.Service_Type}
+                        id="Service_Type"
+                        onChange={(v) => {
+                            handleFormChange({target:{value:v,id:"Service_Type"}})
+                          }}
+                        options={[
+                          {value: 'FEDEX_2_DAY', label: "2 Day"},
+                          {value: 'PRIORITY_OVERNIGHT', label: "Priority Overnight"}
+                        ]}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item 
+                      label="Shipment Number"
+                      name="Shipment Number"
+                      rules={[{
+                        required: toCreateState.PTouch_Label,
+                        message: "Shipment Number is required"
+                    }]}>
+                      <Input
+                        id="Shipment_Number"
+                        value={formState.Shipment_Number}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
               </div>
           </div>
           <div className='cc'>
             <h3>Payment Information</h3>
-              <div className='info'>
-              <FormControl sx={{ m: 1, minWidth: 120 }}>
-                <InputLabel id="Card_Type_label">Card Type</InputLabel>
-                <Select
-                  id="Card_Type"
-                  value={formState.Card_Type}
-                  labelId="Card_Type_label"
-                  label="Card Type"
-                  onChange={(e) => {
-                    handleFormChange({target:{value:e.target.value,id:"Card_Type"}})
-                  }}
-                >
-                  <MenuItem value={'Visa'}>Visa</MenuItem>
-                  <MenuItem value={'MC'}>MasterCard</MenuItem>
-                </Select>
-                </FormControl>
-                <br/>
-                <TextField
-                  id="Card_Name"
-                  label="Card Name"
-                  value={formState.Card_Name}
-                  onInput={handleFormChange}  
-                />
-                <TextField
-                  id="Card_Number"
-                  label="Card Number"
-                  value={formState.Card_Number}
-                  onInput={handleFormChange}
-                />
-                <TextField
-                  id="Security_Code"
-                  label="Security Code"
-                  value={formState.Security_Code}
-                  onInput={handleFormChange}
-                />
-                <TextField
-                  id="Expiration_Date"
-                  label="Expiration Date"
-                  value={formState.Expiration_Date}
-                  onInput={handleFormChange}
-                />
-                <br/>
-                <TextField
-                  id="Billing_Address_1"
-                  label="Billing Address 1"
-                  value={formState.Billing_Address_1}
-                  onInput={handleFormChange}
-                />
-                <TextField
-                  id="Billing_Address_2"
-                  label="Billing Address 2"
-                  value={formState.Billing_Address_2}
-                  onInput={handleFormChange}
-                />
-                <TextField
-                  id="Billing_Address_3"
-                  label="Billing Address 3"
-                  value={formState.Billing_Address_3}
-                  onInput={handleFormChange}
-                />
+              <div className='info' id="card-info">
+                <Row justify={"center"}>
+                  <Col>
+                    <Form.Item label="Card Name:">
+                      <Input
+                        id="Card_Name"
+                        value={formState.Card_Name}
+                        onInput={handleFormChange}  
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row justify={"center"} gutter={[10]}>
+                  <Col span={4}>
+                    <Form.Item label="Card Type">
+                      <Select
+                        value={formState.Card_Type}
+                        id="Card_Type"
+                        onChange={(v) => {
+                            handleFormChange({target:{value:v,id:"Card_Type"}})
+                          }}
+                        options={[
+                          {value: 'Visa', label: "Visa"},
+                          {value: 'MC', label: "MasterCard"}
+                        ]}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item label="Card Number:">
+                      <Input
+                        id="Card_Number"
+                        value={formState.Card_Number}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={3}>
+                    <Form.Item label="CVV:">
+                      <Input
+                        id="Security_Code"
+                        value={formState.Security_Code}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={3}>
+                    <Form.Item label="Expir. Date:">
+                      <Input
+                        id="Expiration_Date"
+                        value={formState.Expiration_Date}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row gutter={[10]}>
+                  <Col span={8}>
+                    <Form.Item label="Billing Address 1:">
+                      <Input
+                        id="Billing_Address_1"
+                        value={formState.Billing_Address_1}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item label="Billing Address 2:">
+                      <Input
+                        id="Billing_Address_2"
+                        value={formState.Billing_Address_2}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item label="Billing Address 3:">
+                      <Input
+                        id="Billing_Address_3"
+                        value={formState.Billing_Address_3}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
               </div>
           </div>
-          <Button variant="contained" onClick={onSubmit}>Submit</Button>
-        </div>
-      </Box>
-      <Box>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Submit
+            </Button>
+          </Form.Item>
+        </Form>
         {requestPDFBytes ? <Button variant="contained" onClick={printJS(requestPDFBytes)} >Print Request Form</Button> : null}
         {pTouchPDFBytes ? <Button variant="contained" onClick={printJS(pTouchPDFBytes)} >Print PTouch</Button> : null}
         {outPDFBytes ? <Button variant="contained" onClick={printJS(outPDFBytes)} >Print Outbound Label</Button> : null}
         {returnPDFBytes ? <Button variant="contained" onClick={printJS(returnPDFBytes)} >Print Return Label</Button> : null}
-      </Box>
     </div>
   );
 }
