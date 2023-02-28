@@ -7,7 +7,6 @@ import CompPdf from './Assets/Company_Or_Recipient_Label.pdf';
 import printJS from 'print-js';
 import { Input, Checkbox, Form, Col, Row, Select, Button, DatePicker, Alert } from 'antd'
 import { useForm } from 'antd/es/form/Form';
-const fs = window.require('fs')
 
 //ipc renderer allows to send requests to electron main file
 const ipcRenderer = window.require("electron").ipcRenderer;
@@ -59,6 +58,7 @@ const ToCreateInitialState = {
 
 
 function App() {
+  console.log(__dirname)
   const [formState, setFormState] = useState(initialFormState);
   const [addressState, setAddress] = useState(addressInitialState);
   const [toCreateState, setToCreateState] = useState(ToCreateInitialState);
@@ -67,11 +67,10 @@ function App() {
   const [antForm] = useForm();
   let labelError = null;
 
-  //form variables that will be served
-  let requestPDFBytes = null;
-  let pTouchPDFBytes = null;
-  let outPDFBytes = null;
-  let returnPDFBytes = null;
+  let requestPrint = false;
+  let pTouchPrint = false;
+  let outPDFPrint = false;
+  let returnPDFPrint = false;
 
   //handles changes made to normal form inputs
   const handleFormChange = (event) => {
@@ -183,7 +182,10 @@ function App() {
           address2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
         }
 
-        requestPDFBytes = await pdfDoc.save()
+        const requestPDFBytes = await pdfDoc.save()
+        const savedRequestPDF = await ipcRenderer.invoke('save-pdf',"requestPDF.pdf",requestPDFBytes)
+        requestPrint = true
+
      } 
      //if ptouch chosen, check if there is attn. and fill pdf
      if(toCreateState.PTouch_Label){
@@ -206,8 +208,9 @@ function App() {
         addressLine2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
         phoneNumber.setText(addressState.Recipient_Phone);
 
-        pTouchPDFBytes = await pdfDoc.save()
-
+        const pTouchPDFBytes = await pdfDoc.save()
+        const savedPTouchPDF = await ipcRenderer.invoke('save-pdf',"pTouchPDF.pdf",pTouchPDFBytes)
+        pTouchPrint = true
       } else {
         const arrayBuffer = await fetch(CompPdf).then(res => res.arrayBuffer())
         const pdfDoc = await PDFDocument.load(arrayBuffer);
@@ -229,6 +232,10 @@ function App() {
         addressLine1.setText(addressState.Street_Address);
         addressLine2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
         phoneNumber.setText(addressState.Recipient_Phone);
+        
+        const pTouchPDFBytes = await pdfDoc.save()
+        const savedPTouchPDF = await ipcRenderer.invoke('save-pdf',"pTouchPDF.pdf",pTouchPDFBytes)
+        pTouchPrint = true
       
       }
      }
@@ -242,16 +249,12 @@ function App() {
           bearer = authInfo.bearer;
         }
         const labels = await ipcRenderer.invoke('get-fedex-labels', bearer, formState, addressState)
-        if(labels.error) {
-          labelError = labels.error
-        }
-        console.log(labels)
-        outPDFBytes = labels.outboundLabel
-        returnPDFBytes = labels.returnLabel
-        console.log(outPDFBytes,returnPDFBytes)
-
+          if(labels.error) {
+            labelError = labels.error
+          }
+          outPDFPrint = true
+          returnPDFPrint = true
      }
-     
   }
 
   return (
@@ -542,7 +545,7 @@ function App() {
                       label="Shipping Date" 
                       name="Shipping Date"
                       rules={[{
-                        required: toCreateState.PTouch_Label,
+                        required: toCreateState.Shipping_Label,
                         message: "Shipping Date is required"
                     }]}>
                         <DatePicker
@@ -556,7 +559,7 @@ function App() {
                       label="Service Type:" 
                       name="Service Type"
                       rules={[{
-                        required: toCreateState.PTouch_Label,
+                        required: toCreateState.Shipping_Label,
                         message: "Service Type is required"
                     }]}>
                     <Select
@@ -577,7 +580,7 @@ function App() {
                       label="Shipment Number"
                       name="Shipment Number"
                       rules={[{
-                        required: toCreateState.PTouch_Label,
+                        required: toCreateState.Shipping_Label,
                         message: "Shipment Number is required"
                     }]}>
                       <Input
@@ -698,10 +701,10 @@ function App() {
             </Button>
           </Form.Item>
         </Form>
-        {requestPDFBytes !== null ? <Button type="default" onClick={printJS(requestPDFBytes)} >Print Request Form</Button> : null}
-        {pTouchPDFBytes !== null ? <Button type="default" onClick={printJS(pTouchPDFBytes)} >Print PTouch</Button> : null}
-        {outPDFBytes !== null ? <Button type="default" onClick={printJS(outPDFBytes)} >Print Outbound Label</Button> : null}
-        {returnPDFBytes !== null ? <Button type="default" onClick={printJS(returnPDFBytes)} >Print Return Label</Button> : null}
+        {requestPrint  ? <Button type="default" onClick={()=>{printJS("Assets/requestPDF.pdf")}} >Print Request Form</Button> : null}
+        {pTouchPrint ? <Button type="default" onClick={()=>{printJS("Assets/pTouchPDF.pdf")}} >Print PTouch</Button> : null}
+        {outPDFPrint ? <Button type="default" onClick={()=>{printJS('Assets/outLabel.pdf')}} >Print Outbound Label</Button> : null}
+        {returnPDFPrint ? <Button type="default" onClick={()=>{printJS('Assets/retLabel.pdf')}} >Print Return Label</Button> : null}
     </div>
   );
 }

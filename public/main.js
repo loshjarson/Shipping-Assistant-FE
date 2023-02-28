@@ -117,7 +117,7 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
                 "docTabContentType": "STANDARD"
               }
             },
-            'labelStockType': "STOCK_4X675_LEADING_DOC_TAB",
+            'labelStockType': "STOCK_4X675_TRAILING_DOC_TAB",
             'imageType': "ZPLII",
             'labelPrintingOrientation': "BOTTOM_EDGE_OF_TEXT_FIRST",
           },
@@ -217,7 +217,7 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
             },
             'labelStockType': "STOCK_4X675_TRAILING_DOC_TAB",
             'imageType': "ZPLII",
-            'labelPrintingOrientation': "TOP_EDGE_OF_TEXT_FIRST",
+            'labelPrintingOrientation': "BOTTOM_EDGE_OF_TEXT_FIRST",
           },
           'requestedPackageLineItems': [
             {
@@ -293,45 +293,14 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
         if (err) {
             return console.log(err);
         }
-        fs.writeFile('./src/Assets/retLabel.pdf', body, function(err) {
+        fs.writeFile('./public/Assets/retLabel.pdf', body, function(err) {
             if (err) {
                 console.log(err);
             }
         });
     });
-
-
-    const outboundLabel = await axios.post("http://api.labelary.com/v1/printers/8dpmm/labels/4x6.75/0/",outLabelForm,{'Content-Type': 'multipart/form-data','Accept':"application/pdf"}).catch(e => console.log(e))
-    const returnLabel = await axios.post("http://api.labelary.com/v1/printers/8dpmm/labels/4x6.75/0/",retLabelForm,{'Content-Type': 'multipart/form-data','Accept':"application/pdf"}).catch(e => console.log(e))
-    console.log(outboundLabel,returnLabel)
-    fs.writeFileSync(session.defaultSession.getStoragePath()+"\\outboundLabel.pdf", outboundLabel.data, err => {
-      if(err){
-        console.log(err)
-      }
-      
-    })
-    fs.writeFileSync(session.defaultSession.getStoragePath()+"\\returnLabel.pdf", returnLabel.data, err => {
-      if(err){
-        console.log(err)
-      }
-    })
-    return({outboundLabel:session.defaultSession.getStoragePath()+"\\outboundLabel.pdf",returnLabel:session.defaultSession.getStoragePath()+"\\returnLabel.pdf"})
 })
 
-ipcMain.handle('validate-address', async (event, ...args) => {
-  // const toValidate = {addressesToValidate:[
-  //   {'address': {
-  //     'streetLines': [
-  //       args[1].Street_Address
-  //     ],
-  //     'city': args[1].City,
-  //     'stateOrProvinceCode': args[1].State,
-  //     'postalCode': args[1].Zip_Code,
-  //     'countryCode': "US",
-  //   }}
-  // ]}
-  // const validatedAddress = await axios.post("https://apis-sandbox.fedex.com/address/v1/addresses/resolve",toValidate,{headers: {'authorization':'bearer ' + args[0]}}).catch(e => console.log(e))
-  // return validatedAddress
-  console.log(session.defaultSession.getStoragePath())
-  session.defaultSession.clearStorageData([{storages:"localStorage"}])
+ipcMain.handle('save-pdf', async (event, ...args) => {
+  fs.writeFile('./public/Assets/'+ args[0], args[1])
 })
