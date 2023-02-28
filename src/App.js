@@ -5,9 +5,9 @@ import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf';
 import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
 import CompPdf from './Assets/Company_Or_Recipient_Label.pdf';
 import printJS from 'print-js';
-import { Input, Checkbox, Form, Col, Row, Select, Button, DatePicker } from 'antd'
+import { Input, Checkbox, Form, Col, Row, Select, Button, DatePicker, Alert } from 'antd'
 import { useForm } from 'antd/es/form/Form';
-
+const fs = window.require('fs')
 
 //ipc renderer allows to send requests to electron main file
 const ipcRenderer = window.require("electron").ipcRenderer;
@@ -44,7 +44,6 @@ const initialFormState = {
 const addressInitialState = {
   Recipient:null,
   Attn: null,
-  Recipient_Address: null,
   Street_Address: null,
   City: null,
   State: null,
@@ -66,6 +65,7 @@ function App() {
   let bearer = null;
   let authTime = null;
   const [antForm] = useForm();
+  let labelError = null;
 
   //form variables that will be served
   let requestPDFBytes = null;
@@ -106,6 +106,32 @@ function App() {
     setAddress({...addressInitialState});
     setToCreateState({...ToCreateInitialState});
     antForm.resetFields();
+  }
+
+  const validateAddress = async () => {
+    const now = Date.now()
+    if(!bearer || (now-authTime)/1000 > 3599){
+      const authInfo = await ipcRenderer.invoke('get-fedex-auth')
+      authTime = Date.now()
+      bearer = authInfo.bearer;
+    }
+    const toValidate = {
+      State: addressState.State,
+      Street_Address: addressState.Street_Address,
+      Zip_Code: addressState.Zip_Code,
+      City: addressState.City
+    }
+    console.log(toValidate)
+    const res = await ipcRenderer.invoke("validate-address", bearer, toValidate)
+    console.log(res)
+    const validatedAddress = {
+      Street_Address: res.output.resolvedAddresses[0].streetLinesToken[0],
+      City: res.output.resolvedAddresses[0].city,
+      State: res.output.resolvedAddresses[0].stateOrProvinceCode,
+      Zip_Code: res.output.resolvedAddresses[0].parsedPostalCode.addOn ? res.output.resolvedAdresses[0].parsedPostalCode.base + "-" + res.output.resolvedAdresses[0].parsedPostalCode.addOn : res.output.resolvedAdresses[0].parsedPostalCode.base,
+    }
+    setAddress(...addressState, ...validatedAddress)
+    console.log("validated")
   }
 
   //handles submission events. pdf form filling, and shipment label request
@@ -216,7 +242,14 @@ function App() {
           bearer = authInfo.bearer;
         }
         const labels = await ipcRenderer.invoke('get-fedex-labels', bearer, formState, addressState)
+        if(labels.error) {
+          labelError = labels.error
+        }
         console.log(labels)
+        outPDFBytes = labels.outboundLabel
+        returnPDFBytes = labels.returnLabel
+        console.log(outPDFBytes,returnPDFBytes)
+
      }
      
   }
@@ -405,17 +438,6 @@ function App() {
                     </Form.Item>
                   </Col>
                 </Row>
-                {/* <Row justify={"center"}>
-                  <Col span={15}>
-                    <Form.Item label="Recipient Address:">
-                      <Input
-                        id="Recipient_Address"
-                        value={formState.Recipient_Address}
-                        onInput={handleAddressChange}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row> */}
                 <Row justify={"center"} gutter={[10]}>
                   <Col span={7}>
                     <Form.Item 
@@ -507,6 +529,13 @@ function App() {
                     </Form.Item>
                   </Col> 
                 </Row>
+                <Row justify={"center"}>
+                  <Form.Item>
+                    <Button type="default" onClick={validateAddress}>
+                      Validate
+                    </Button>
+                  </Form.Item>
+                </Row>
                 <Row gutter={[10]} justify={"center"}>
                   <Col span={5}>
                     <Form.Item 
@@ -518,7 +547,7 @@ function App() {
                     }]}>
                         <DatePicker
                           value={formState.Shipping_Date}
-                          onChange={e => handleFormChange({value:e,id:"Shipping_Date"})}
+                          onChange={e => handleFormChange({target:{value:e,id:"Shipping_Date"}})}
                         />
                     </Form.Item>
                   </Col>
@@ -650,6 +679,14 @@ function App() {
                 </Row>
               </div>
           </div>
+          {labelError ?  
+            <Alert
+              message="Address Error"
+              description={labelError}
+              type="error"
+              showIcon
+            /> :
+            null}
           <Form.Item>
             <Button type="primary" htmlType="submit">
               Submit
@@ -661,10 +698,10 @@ function App() {
             </Button>
           </Form.Item>
         </Form>
-        {requestPDFBytes ? <Button default="default" onClick={printJS(requestPDFBytes)} >Print Request Form</Button> : null}
-        {pTouchPDFBytes ? <Button default="default" onClick={printJS(pTouchPDFBytes)} >Print PTouch</Button> : null}
-        {outPDFBytes ? <Button default="default" onClick={printJS(outPDFBytes)} >Print Outbound Label</Button> : null}
-        {returnPDFBytes ? <Button default="default" onClick={printJS(returnPDFBytes)} >Print Return Label</Button> : null}
+        {requestPDFBytes !== null ? <Button type="default" onClick={printJS(requestPDFBytes)} >Print Request Form</Button> : null}
+        {pTouchPDFBytes !== null ? <Button type="default" onClick={printJS(pTouchPDFBytes)} >Print PTouch</Button> : null}
+        {outPDFBytes !== null ? <Button type="default" onClick={printJS(outPDFBytes)} >Print Outbound Label</Button> : null}
+        {returnPDFBytes !== null ? <Button type="default" onClick={printJS(returnPDFBytes)} >Print Return Label</Button> : null}
     </div>
   );
 }

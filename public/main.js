@@ -1,8 +1,9 @@
-const { BrowserWindow, app, ipcMain } = require("electron");
+const { BrowserWindow, app, ipcMain, session } = require("electron");
 const axios = require("axios");
 const moment = require("moment");
 require('dotenv').config();
-
+const fs = require('fs')
+const request = require("request")
 
 
 require('@electron/remote/main').initialize()
@@ -10,8 +11,8 @@ require('@electron/remote/main').initialize()
 function createWindow() {
     //create browser window
     const win = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 900,
+        height: 650,
         webPreferences: {
             nodeIntegration: true,
             enableRemoteModule: true,
@@ -20,6 +21,7 @@ function createWindow() {
         icon:"./sbs logo.png"
     })
     win.loadURL('http://localhost:3000')
+    
 }
 
 app.on('ready', createWindow)
@@ -54,6 +56,7 @@ ipcMain.handle('get-fedex-auth', async (event, ...args) => {
 })
 
 ipcMain.handle('get-fedex-labels', async (event, ...args) => {
+    let addressError = null;
     const shippingUrl = 'https://apis-sandbox.fedex.com/ship/v1/shipments';
     console.log(args)
     const fedexOutBody = {
@@ -109,6 +112,11 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
           'labelSpecification': {
             'labelFormatType': "COMMON2D",
             'labelOrder': "SHIPPING_LABEL_FIRST",
+            "customerSpecifiedDetail": {
+              "docTabContent": {
+                "docTabContentType": "STANDARD"
+              }
+            },
             'labelStockType': "STOCK_4X675_LEADING_DOC_TAB",
             'imageType': "ZPLII",
             'labelPrintingOrientation': "BOTTOM_EDGE_OF_TEXT_FIRST",
@@ -202,9 +210,14 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
           'labelSpecification': {
             'labelFormatType': "COMMON2D",
             'labelOrder': "SHIPPING_LABEL_FIRST",
-            'labelStockType': "STOCK_4X675_LEADING_DOC_TAB",
+            "customerSpecifiedDetail": {
+              "docTabContent": {
+                "docTabContentType": "STANDARD"
+              }
+            },
+            'labelStockType': "STOCK_4X675_TRAILING_DOC_TAB",
             'imageType': "ZPLII",
-            'labelPrintingOrientation': "BOTTOM_EDGE_OF_TEXT_FIRST",
+            'labelPrintingOrientation': "TOP_EDGE_OF_TEXT_FIRST",
           },
           'requestedPackageLineItems': [
             {
@@ -227,16 +240,98 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
         },
         'shipAction': "CONFIRM",
       }
-    const outboundLabelRes = await axios.post(shippingUrl,fedexOutBody,{headers: {'authorization':'bearer ' + args[0]}}).catch(e => console.log(e))
-    const returnLabelRes = await axios.post(shippingUrl,fedexRetBody,{headers: {'authorization':'bearer ' + args[0]}}).catch(e => console.log(e))
-        .catch(err => {
-            console.log(err)
-        })
-    const codedOutLabel = Buffer.from(JSON.parse(outboundLabelRes).data.output.transactionShipments[0].pieceResponses[0].packageDocuments.encodedLabel, "base64");
-    const codedReturnLabel = Buffer.from(JSON.parse(returnLabelRes).data.output.transactionShipments[0].pieceResponses[0].packageDocuments.encodedLabel, "base64");
+    const outboundLabelRes = await axios.post(shippingUrl,fedexOutBody,{headers: {'authorization':'bearer ' + args[0]}})
+      .catch(err => {
+        addressError = err.request.data.errors[0].message
+      })
+    const returnLabelRes = await axios.post(shippingUrl,fedexRetBody,{headers: {'authorization':'bearer ' + args[0]}})
+      .catch(err => {
+        addressError = err.request.data.errors[0].message
+      })
+    if(addressError){
+      return {error:addressError}
+    }
+    const codedOutLabel = Buffer.from(outboundLabelRes.data.output.transactionShipments[0].pieceResponses[0].packageDocuments[0].encodedLabel, "base64");
+    const codedReturnLabel = Buffer.from(returnLabelRes.data.output.transactionShipments[0].pieceResponses[0].packageDocuments[0].encodedLabel, "base64");
     const decodedOutLabel = codedOutLabel.toString("utf8");
     const decodedReturnLabel = codedReturnLabel.toString("utf8");
-    const outboundLabel = await axios.get("http://api.labelary.com/v1/printers/8dpmm/labels/4x6.75/0/"+decodedOutLabel,{Accept:"application/pdf"}).catch(e => console.log(e))
-    const returnLabel = await axios.get("http://api.labelary.com/v1/printers/8dpmm/labels/4x6.75/0/"+decodedReturnLabel,{Accept:"application/pdf"}).catch(e => console.log(e))
-    return {outboundLabel, returnLabel}
+    const outLabelForm = new FormData()
+    const retLabelForm = new FormData()
+    outLabelForm.append("file",decodedOutLabel);
+    retLabelForm.append("file",decodedReturnLabel);
+    console.log(app.getAppPath("sessionData"))
+
+    var outOptions = {
+      encoding: null,
+      formData: { file: decodedOutLabel },
+      // omit this line to get PNG images back
+      headers: { 'Accept': 'application/pdf' },
+      // adjust print density (8dpmm), label width (4 inches), label height (6 inches), and label index (0) as necessary
+      url: 'http://api.labelary.com/v1/printers/8dpmm/labels/4x6.75/0/'
+    };
+    
+    request.post(outOptions, function(err, resp, body) {
+        if (err) {
+            return console.log(err);
+        }
+        fs.writeFile('./src/Assets/outLabel.pdf', body, function(err) {
+            if (err) {
+                console.log(err);
+            }
+        });
+    });
+    var retOptions = {
+      encoding: null,
+      formData: { file: decodedReturnLabel },
+      // omit this line to get PNG images back
+      headers: { 'Accept': 'application/pdf' },
+      // adjust print density (8dpmm), label width (4 inches), label height (6 inches), and label index (0) as necessary
+      url: 'http://api.labelary.com/v1/printers/8dpmm/labels/4x6.75/0/'
+    };
+    
+    request.post(retOptions, function(err, resp, body) {
+        if (err) {
+            return console.log(err);
+        }
+        fs.writeFile('./src/Assets/retLabel.pdf', body, function(err) {
+            if (err) {
+                console.log(err);
+            }
+        });
+    });
+
+
+    const outboundLabel = await axios.post("http://api.labelary.com/v1/printers/8dpmm/labels/4x6.75/0/",outLabelForm,{'Content-Type': 'multipart/form-data','Accept':"application/pdf"}).catch(e => console.log(e))
+    const returnLabel = await axios.post("http://api.labelary.com/v1/printers/8dpmm/labels/4x6.75/0/",retLabelForm,{'Content-Type': 'multipart/form-data','Accept':"application/pdf"}).catch(e => console.log(e))
+    console.log(outboundLabel,returnLabel)
+    fs.writeFileSync(session.defaultSession.getStoragePath()+"\\outboundLabel.pdf", outboundLabel.data, err => {
+      if(err){
+        console.log(err)
+      }
+      
+    })
+    fs.writeFileSync(session.defaultSession.getStoragePath()+"\\returnLabel.pdf", returnLabel.data, err => {
+      if(err){
+        console.log(err)
+      }
+    })
+    return({outboundLabel:session.defaultSession.getStoragePath()+"\\outboundLabel.pdf",returnLabel:session.defaultSession.getStoragePath()+"\\returnLabel.pdf"})
+})
+
+ipcMain.handle('validate-address', async (event, ...args) => {
+  // const toValidate = {addressesToValidate:[
+  //   {'address': {
+  //     'streetLines': [
+  //       args[1].Street_Address
+  //     ],
+  //     'city': args[1].City,
+  //     'stateOrProvinceCode': args[1].State,
+  //     'postalCode': args[1].Zip_Code,
+  //     'countryCode': "US",
+  //   }}
+  // ]}
+  // const validatedAddress = await axios.post("https://apis-sandbox.fedex.com/address/v1/addresses/resolve",toValidate,{headers: {'authorization':'bearer ' + args[0]}}).catch(e => console.log(e))
+  // return validatedAddress
+  console.log(session.defaultSession.getStoragePath())
+  session.defaultSession.clearStorageData([{storages:"localStorage"}])
 })
