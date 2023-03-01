@@ -67,10 +67,10 @@ function App() {
   const [antForm] = useForm();
   let labelError = null;
 
-  let requestPrint = false;
-  let pTouchPrint = false;
-  let outPDFPrint = false;
-  let returnPDFPrint = false;
+  const [requestPrint, setRequestPrint] = useState(false);
+  const [pTouchPrint, setPTouchPrint] = useState(false);
+  const [outPDFPrint, setOutPDFPrint] = useState(false);
+  const [returnPDFPrint, setReturnPDFPrint] = useState(false);
 
   //handles changes made to normal form inputs
   const handleFormChange = (event) => {
@@ -135,6 +135,7 @@ function App() {
 
   //handles submission events. pdf form filling, and shipment label request
   const onSubmit = async (event) => {
+    const nothing = await ipcRenderer.invoke('clear-files')
     console.log("submitting")
      //if request chosen, fill request pdf
      if(toCreateState.Shipment_Request) {
@@ -184,7 +185,7 @@ function App() {
 
         const requestPDFBytes = await pdfDoc.save()
         const savedRequestPDF = await ipcRenderer.invoke('save-pdf',"requestPDF.pdf",requestPDFBytes)
-        requestPrint = true
+        setRequestPrint(true)
 
      } 
      //if ptouch chosen, check if there is attn. and fill pdf
@@ -206,20 +207,15 @@ function App() {
         recipientName.setText(addressState.Attn);
         addressLine1.setText(addressState.Street_Address);
         addressLine2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
-        phoneNumber.setText(addressState.Recipient_Phone);
+        phoneNumber.setText(formState.Recipient_Phone);
 
         const pTouchPDFBytes = await pdfDoc.save()
         const savedPTouchPDF = await ipcRenderer.invoke('save-pdf',"pTouchPDF.pdf",pTouchPDFBytes)
-        pTouchPrint = true
+        setPTouchPrint(true)
       } else {
-        const arrayBuffer = await fetch(CompPdf).then(res => res.arrayBuffer())
+        const arrayBuffer = await fetch(CompAttnPdf).then(res => res.arrayBuffer())
         const pdfDoc = await PDFDocument.load(arrayBuffer);
-        const form = pdfDoc.getForm()
-        const fields = form.getFields()
-        fields.forEach(field => {
-          const name = field.getName()
-          console.log('Field name:', name)
-        })
+        const form = pdfDoc.getForm();
         
         //select all fields
         const recipientName = form.getTextField("Recipient_Name");
@@ -228,14 +224,14 @@ function App() {
         const phoneNumber = form.getTextField("Phone_Number");
 
         //fill all fields
-        recipientName.setText(addressState.Recipient);
-        addressLine1.setText(addressState.Street_Address);
-        addressLine2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
-        phoneNumber.setText(addressState.Recipient_Phone);
-        
+        recipientName.setText(addressState.Recipient ? addressState.Recipient: "");
+        addressLine1.setText(addressState.Street_Address ? addressState.Street_Address : "");
+        addressLine2.setText((addressState.City&&addressState.State&&addressState.Zip_Code) ? addressState.City + ", " + addressState.State + " " + addressState.Zip_Code : "");
+        phoneNumber.setText(formState.Recipient_Phone ? formState.Recipient_Phone : "");
+        console.log(pdfDoc)
         const pTouchPDFBytes = await pdfDoc.save()
         const savedPTouchPDF = await ipcRenderer.invoke('save-pdf',"pTouchPDF.pdf",pTouchPDFBytes)
-        pTouchPrint = true
+        setPTouchPrint(true)
       
       }
      }
@@ -252,8 +248,8 @@ function App() {
           if(labels.error) {
             labelError = labels.error
           }
-          outPDFPrint = true
-          returnPDFPrint = true
+          setOutPDFPrint(true)
+          setReturnPDFPrint(true)
      }
   }
 
@@ -421,7 +417,7 @@ function App() {
                       label="Recipient/Company:"
                       name="Recipient"
                       rules={[{
-                      required: toCreateState.PTouch_Label,
+                      required: toCreateState.Shipping_Label,
                       message: 'Recipient name is required (Attn. is not)'
                       }]}>
                       <Input
@@ -447,7 +443,7 @@ function App() {
                       label="Street Address:"
                       name="Street Address"
                       rules={[{
-                      required: toCreateState.PTouch_Label,
+                      required: toCreateState.Shipping_Label,
                       message: "Recipient address is required"
                     }]}>
                       <Input
@@ -462,7 +458,7 @@ function App() {
                       label="City:"
                       name="City"
                       rules={[{
-                      required: toCreateState.PTouch_Label,
+                      required: toCreateState.Shipping_Label,
                       message: "City is required"
                     }]}>
                       <Input
@@ -477,7 +473,7 @@ function App() {
                       label="State:"
                       name="State"
                       rules={[{
-                      required: toCreateState.PTouch_Label,
+                      required: toCreateState.Shipping_Label,
                       message: "State is required"
                     }]}>
                       <Input
@@ -492,7 +488,7 @@ function App() {
                       label="Zip Code:"
                       name="Zip Code"
                       rules={[{
-                      required: toCreateState.PTouch_Label,
+                      required: toCreateState.Shipping_Label,
                       message: "Zip code is required"
                     }]}>
                       <Input
@@ -509,7 +505,7 @@ function App() {
                       label="Recipient Phone:"
                       name="Recipient Phone"
                       rules={[{
-                      required: true,
+                      required: toCreateState.Shipping_Label,
                       message: "Zip code is required"
                     }]}>
                       <Input
@@ -701,7 +697,7 @@ function App() {
             </Button>
           </Form.Item>
         </Form>
-        {requestPrint  ? <Button type="default" onClick={()=>{printJS("Assets/requestPDF.pdf")}} >Print Request Form</Button> : null}
+        {requestPrint ? <Button type="default" onClick={()=>{printJS("Assets/requestPDF.pdf")}} >Print Request Form</Button> : null}
         {pTouchPrint ? <Button type="default" onClick={()=>{printJS("Assets/pTouchPDF.pdf")}} >Print PTouch</Button> : null}
         {outPDFPrint ? <Button type="default" onClick={()=>{printJS('Assets/outLabel.pdf')}} >Print Outbound Label</Button> : null}
         {returnPDFPrint ? <Button type="default" onClick={()=>{printJS('Assets/retLabel.pdf')}} >Print Return Label</Button> : null}

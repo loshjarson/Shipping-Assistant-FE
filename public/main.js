@@ -1,9 +1,11 @@
-const { BrowserWindow, app, ipcMain, session } = require("electron");
+const { BrowserWindow, app, ipcMain } = require("electron");
 const axios = require("axios");
 const moment = require("moment");
 require('dotenv').config();
 const fs = require('fs')
 const request = require("request")
+const path = require("path")
+const printDialog = require('electron-print-dialog')
 
 
 require('@electron/remote/main').initialize()
@@ -24,11 +26,32 @@ function createWindow() {
     
 }
 
-app.on('ready', createWindow)
+app.on('ready', function () {
+  fs.readdir('./public/Assets/', (err, files) => {
+    if (err) throw err;
+  
+    for (const file of files) {
+      fs.unlink(path.join('./public/Assets/', file), (err) => {
+        if (err) throw err;
+      });
+    }
+  });
+  createWindow()
+})
 
 //Quit when windows are closed (for mac)
 //removes common occurence of app staying open until Cmd+Q
 app.on('windows-all-closed', function () {
+    fs.readdir('./public/Assets/', (err, files) => {
+      if (err) throw err;
+    
+      for (const file of files) {
+        if(file === "outLabel.pdf" || file === "retLabel.pdf")
+        fs.unlink(path.join('./public/Assets/', file), (err) => {
+          if (err) throw err;
+        });
+      }
+    });
     if(process.platform !== 'darwin'){
         app.quit()
     }
@@ -56,6 +79,19 @@ ipcMain.handle('get-fedex-auth', async (event, ...args) => {
 })
 
 ipcMain.handle('get-fedex-labels', async (event, ...args) => {
+    console.log("getting fedex files")
+    const cleared = await fs.readdir('./public/Assets/', (err, files) => {
+      console.log(files)
+      if (err) throw err;
+    
+      for (const file of files) {
+        if(file === "outLabel.pdf" || file === "retLabel.pdf")
+        fs.unlink(path.join('./public/Assets/', file), (err) => {
+          if (err) throw err;
+        });
+      }
+    });
+    console.log("cleared files")
     let addressError = null;
     const shippingUrl = 'https://apis-sandbox.fedex.com/ship/v1/shipments';
     console.log(args)
@@ -242,6 +278,7 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
       }
     const outboundLabelRes = await axios.post(shippingUrl,fedexOutBody,{headers: {'authorization':'bearer ' + args[0]}})
       .catch(err => {
+        console.log(err)
         addressError = err.request.data.errors[0].message
       })
     const returnLabelRes = await axios.post(shippingUrl,fedexRetBody,{headers: {'authorization':'bearer ' + args[0]}})
@@ -255,11 +292,6 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
     const codedReturnLabel = Buffer.from(returnLabelRes.data.output.transactionShipments[0].pieceResponses[0].packageDocuments[0].encodedLabel, "base64");
     const decodedOutLabel = codedOutLabel.toString("utf8");
     const decodedReturnLabel = codedReturnLabel.toString("utf8");
-    const outLabelForm = new FormData()
-    const retLabelForm = new FormData()
-    outLabelForm.append("file",decodedOutLabel);
-    retLabelForm.append("file",decodedReturnLabel);
-    console.log(app.getAppPath("sessionData"))
 
     var outOptions = {
       encoding: null,
@@ -274,12 +306,14 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
         if (err) {
             return console.log(err);
         }
-        fs.writeFile('./src/Assets/outLabel.pdf', body, function(err) {
+        console.log("saving")
+        fs.writeFile('./public/Assets/outLabel.pdf', body, function(err) {
             if (err) {
                 console.log(err);
             }
         });
     });
+
     var retOptions = {
       encoding: null,
       formData: { file: decodedReturnLabel },
@@ -299,8 +333,27 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
             }
         });
     });
+    return "done"
 })
 
 ipcMain.handle('save-pdf', async (event, ...args) => {
-  fs.writeFile('./public/Assets/'+ args[0], args[1])
+  fs.writeFile('./public/Assets/'+ args[0], args[1], function(err) {
+    if (err) {
+        console.log(err);
+    }
+  })
+})
+
+ipcMain.handle('clear-files', async (event, ...args) => {
+  fs.readdir('./public/Assets/', (err, files) => {
+    if (err) throw err;
+  
+    for (const file of files) {
+      if(file === args[0]){
+        fs.unlink(path.join('./public/Assets/', file), (err) => {
+        if (err) throw err;
+        });
+      }
+    }
+  });
 })

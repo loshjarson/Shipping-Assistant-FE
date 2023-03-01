@@ -17,6 +17,7 @@
     "concurrently": "^7.6.0",
     "cross-env": "^7.0.3",
     "dayjs": "^1.11.7",
+    "electron-print-dialog": "^0.1.0-alpha.1",
     "fs": "^0.0.1-security",
     "moment": "^2.29.4",
     "path": "^0.12.7",
