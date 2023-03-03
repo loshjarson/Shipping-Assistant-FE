@@ -1,6 +1,6 @@
 import './App.css';
 import { useState } from 'react';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, StandardFonts } from 'pdf-lib';
 import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf';
 import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
 import CompPdf from './Assets/Company_Or_Recipient_Label.pdf';
@@ -67,10 +67,10 @@ function App() {
   const [antForm] = useForm();
   let labelError = null;
 
-  const [requestPrint, setRequestPrint] = useState(false);
-  const [pTouchPrint, setPTouchPrint] = useState(false);
-  const [outPDFPrint, setOutPDFPrint] = useState(false);
-  const [returnPDFPrint, setReturnPDFPrint] = useState(false);
+  const [requestPrint, setRequestPrint] = useState(null);
+  const [pTouchPrint, setPTouchPrint] = useState(null);
+  const [outPDFPrint, setOutPDFPrint] = useState(null);
+  const [returnPDFPrint, setReturnPDFPrint] = useState(null);
 
   //handles changes made to normal form inputs
   const handleFormChange = (event) => {
@@ -135,7 +135,6 @@ function App() {
 
   //handles submission events. pdf form filling, and shipment label request
   const onSubmit = async (event) => {
-    const nothing = await ipcRenderer.invoke('clear-files')
     console.log("submitting")
      //if request chosen, fill request pdf
      if(toCreateState.Shipment_Request) {
@@ -183,9 +182,8 @@ function App() {
           address2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
         }
 
-        const requestPDFBytes = await pdfDoc.save()
-        const savedRequestPDF = await ipcRenderer.invoke('save-pdf',"requestPDF.pdf",requestPDFBytes)
-        setRequestPrint(true)
+        const requestPDFBytes = await pdfDoc.saveAsBase64({ dataUri: true })
+        setRequestPrint(requestPDFBytes)
 
      } 
      //if ptouch chosen, check if there is attn. and fill pdf
@@ -209,19 +207,18 @@ function App() {
         addressLine2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
         phoneNumber.setText(formState.Recipient_Phone);
 
-        const pTouchPDFBytes = await pdfDoc.save()
-        const savedPTouchPDF = await ipcRenderer.invoke('save-pdf',"pTouchPDF.pdf",pTouchPDFBytes)
-        setPTouchPrint(true)
+        const pTouchPDFBytes = await pdfDoc.saveAsBase64({ dataUri: true })
+        setPTouchPrint(pTouchPDFBytes)
       } else {
         const arrayBuffer = await fetch(CompAttnPdf).then(res => res.arrayBuffer())
         const pdfDoc = await PDFDocument.load(arrayBuffer);
         const form = pdfDoc.getForm();
         
         //select all fields
-        const recipientName = form.getTextField("Recipient_Name");
-        const addressLine1 = form.getTextField("Address_Line_1");
-        const addressLine2 = form.getTextField("Address_Line_2");
-        const phoneNumber = form.getTextField("Phone_Number");
+        const recipientName = form.getTextField("Company_Name");
+        const addressLine1 = form.getTextField("Recipient_Name");
+        const addressLine2 = form.getTextField("Address_Line_1");
+        const phoneNumber = form.getTextField("Address_Line_2");
 
         //fill all fields
         recipientName.setText(addressState.Recipient ? addressState.Recipient: "");
@@ -229,9 +226,8 @@ function App() {
         addressLine2.setText((addressState.City&&addressState.State&&addressState.Zip_Code) ? addressState.City + ", " + addressState.State + " " + addressState.Zip_Code : "");
         phoneNumber.setText(formState.Recipient_Phone ? formState.Recipient_Phone : "");
         console.log(pdfDoc)
-        const pTouchPDFBytes = await pdfDoc.save()
-        const savedPTouchPDF = await ipcRenderer.invoke('save-pdf',"pTouchPDF.pdf",pTouchPDFBytes)
-        setPTouchPrint(true)
+        const pTouchPDFBytes = await pdfDoc.saveAsBase64({ dataUri: true })
+        setPTouchPrint(pTouchPDFBytes)
       
       }
      }
@@ -248,8 +244,15 @@ function App() {
           if(labels.error) {
             labelError = labels.error
           }
-          setOutPDFPrint(true)
-          setReturnPDFPrint(true)
+
+          const outLabel = labels[0]
+          const retLabel = labels[1]
+          const outpdfDoc = await PDFDocument.load(outLabel);
+          const retpdfDoc = await PDFDocument.load(retLabel);
+          const outPDFBytes = await outpdfDoc.saveAsBase64({ dataUri: true })
+          const retPDFBytes = await retpdfDoc.saveAsBase64({ dataUri: true }) 
+          setOutPDFPrint(outPDFBytes)
+          setReturnPDFPrint(retPDFBytes)
      }
   }
 
@@ -697,10 +700,12 @@ function App() {
             </Button>
           </Form.Item>
         </Form>
-        {requestPrint ? <Button type="default" onClick={()=>{printJS("Assets/requestPDF.pdf")}} >Print Request Form</Button> : null}
-        {pTouchPrint ? <Button type="default" onClick={()=>{printJS("Assets/pTouchPDF.pdf")}} >Print PTouch</Button> : null}
-        {outPDFPrint ? <Button type="default" onClick={()=>{printJS('Assets/outLabel.pdf')}} >Print Outbound Label</Button> : null}
-        {returnPDFPrint ? <Button type="default" onClick={()=>{printJS('Assets/retLabel.pdf')}} >Print Return Label</Button> : null}
+        <div style={{display:"flex"}}>
+        {requestPrint ? <iframe title="request" id="pdf" style={{width: "100%", height: "100%"}} src={requestPrint}/> : null}
+        {pTouchPrint ? <iframe title="pTouch" id="pdf" style={{width: "100%", height: "100%"}} src={pTouchPrint}/> : null}
+        {outPDFPrint ? <iframe title="outbound" id="pdf" style={{width: "100%", height: "100%"}} src={outPDFPrint}/> : null}
+        {returnPDFPrint ? <iframe title="return" id="pdf" style={{width: "100%", height: "100%"}} src={returnPDFPrint}/> : null}
+        </div>
     </div>
   );
 }

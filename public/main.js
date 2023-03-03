@@ -2,10 +2,9 @@ const { BrowserWindow, app, ipcMain } = require("electron");
 const axios = require("axios");
 const moment = require("moment");
 require('dotenv').config();
-const fs = require('fs')
-const request = require("request")
 const path = require("path")
-const printDialog = require('electron-print-dialog')
+const isDev = require('electron-is-dev')
+const asyncRequest = require("request-promise")
 
 
 require('@electron/remote/main').initialize()
@@ -20,38 +19,19 @@ function createWindow() {
             enableRemoteModule: true,
             contextIsolation: false
         },
-        icon:"./sbs logo.png"
+        icon:"./sbs logo.ico"
     })
-    win.loadURL('http://localhost:3000')
+    win.loadURL( isDev ? 'http://localhost:3000' : `file://${path.join(__dirname, '../build/index.html')}`)
     
 }
 
 app.on('ready', function () {
-  fs.readdir('./public/Assets/', (err, files) => {
-    if (err) throw err;
-  
-    for (const file of files) {
-      fs.unlink(path.join('./public/Assets/', file), (err) => {
-        if (err) throw err;
-      });
-    }
-  });
   createWindow()
 })
 
 //Quit when windows are closed (for mac)
 //removes common occurence of app staying open until Cmd+Q
 app.on('windows-all-closed', function () {
-    fs.readdir('./public/Assets/', (err, files) => {
-      if (err) throw err;
-    
-      for (const file of files) {
-        if(file === "outLabel.pdf" || file === "retLabel.pdf")
-        fs.unlink(path.join('./public/Assets/', file), (err) => {
-          if (err) throw err;
-        });
-      }
-    });
     if(process.platform !== 'darwin'){
         app.quit()
     }
@@ -79,19 +59,6 @@ ipcMain.handle('get-fedex-auth', async (event, ...args) => {
 })
 
 ipcMain.handle('get-fedex-labels', async (event, ...args) => {
-    console.log("getting fedex files")
-    const cleared = await fs.readdir('./public/Assets/', (err, files) => {
-      console.log(files)
-      if (err) throw err;
-    
-      for (const file of files) {
-        if(file === "outLabel.pdf" || file === "retLabel.pdf")
-        fs.unlink(path.join('./public/Assets/', file), (err) => {
-          if (err) throw err;
-        });
-      }
-    });
-    console.log("cleared files")
     let addressError = null;
     const shippingUrl = 'https://apis-sandbox.fedex.com/ship/v1/shipments';
     console.log(args)
@@ -301,17 +268,16 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
       // adjust print density (8dpmm), label width (4 inches), label height (6 inches), and label index (0) as necessary
       url: 'http://api.labelary.com/v1/printers/8dpmm/labels/4x6.75/0/'
     };
-    
-    request.post(outOptions, function(err, resp, body) {
+    let labels = []
+    await asyncRequest.post(outOptions, function(err, resp, body) {
         if (err) {
-            return console.log(err);
+            console.log(err);
         }
-        console.log("saving")
-        fs.writeFile('./public/Assets/outLabel.pdf', body, function(err) {
-            if (err) {
-                console.log(err);
-            }
-        });
+        else {
+          console.log("saving")
+          labels.push(body)
+        }
+        
     });
 
     var retOptions = {
@@ -323,37 +289,15 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
       url: 'http://api.labelary.com/v1/printers/8dpmm/labels/4x6.75/0/'
     };
     
-    request.post(retOptions, function(err, resp, body) {
+    await asyncRequest.post(retOptions, function(err, resp, body) {
         if (err) {
             return console.log(err);
         }
-        fs.writeFile('./public/Assets/retLabel.pdf', body, function(err) {
-            if (err) {
-                console.log(err);
-            }
-        });
+        else {
+          labels.push(body)
+        }
+        
     });
-    return "done"
-})
-
-ipcMain.handle('save-pdf', async (event, ...args) => {
-  fs.writeFile('./public/Assets/'+ args[0], args[1], function(err) {
-    if (err) {
-        console.log(err);
-    }
-  })
-})
-
-ipcMain.handle('clear-files', async (event, ...args) => {
-  fs.readdir('./public/Assets/', (err, files) => {
-    if (err) throw err;
-  
-    for (const file of files) {
-      if(file === args[0]){
-        fs.unlink(path.join('./public/Assets/', file), (err) => {
-        if (err) throw err;
-        });
-      }
-    }
-  });
+    console.log(labels)
+    return labels
 })
