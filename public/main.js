@@ -54,14 +54,12 @@ ipcMain.handle('get-fedex-auth', async (event, ...args) => {
         .catch(err => {
             console.log(err)
         })
-    console.log(userInfo.data)
     return {bearer:userInfo.data.access_token}
 })
 
 ipcMain.handle('get-fedex-labels', async (event, ...args) => {
     let addressError = null;
     const shippingUrl = 'https://apis-sandbox.fedex.com/ship/v1/shipments';
-    console.log(args)
     const fedexOutBody = {
         'mergeLabelDocOption': "LABELS_ONLY",
         'requestedShipment': {
@@ -245,15 +243,14 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
       }
     const outboundLabelRes = await axios.post(shippingUrl,fedexOutBody,{headers: {'authorization':'bearer ' + args[0]}})
       .catch(err => {
-        console.log(err)
-        addressError = err.request.data.errors[0].message
+        addressError = err.data.errors[0].message
       })
     const returnLabelRes = await axios.post(shippingUrl,fedexRetBody,{headers: {'authorization':'bearer ' + args[0]}})
       .catch(err => {
         addressError = err.request.data.errors[0].message
       })
     if(addressError){
-      return {error:addressError}
+      return [{error:addressError}]
     }
     const codedOutLabel = Buffer.from(outboundLabelRes.data.output.transactionShipments[0].pieceResponses[0].packageDocuments[0].encodedLabel, "base64");
     const codedReturnLabel = Buffer.from(returnLabelRes.data.output.transactionShipments[0].pieceResponses[0].packageDocuments[0].encodedLabel, "base64");
@@ -274,7 +271,6 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
             console.log(err);
         }
         else {
-          console.log("saving")
           labels.push(body)
         }
         
@@ -291,13 +287,20 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
     
     await asyncRequest.post(retOptions, function(err, resp, body) {
         if (err) {
-            return console.log(err);
+            console.log(err);
         }
         else {
           labels.push(body)
         }
         
     });
-    console.log(labels)
     return labels
+})
+
+ipcMain.handle("print-preview", async (event, url)=> {
+  const printPreview = new BrowserWindow({
+    width: 900,
+    height: 650,
+  })
+  printPreview.loadURL(url)
 })
