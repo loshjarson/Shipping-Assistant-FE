@@ -696,11 +696,14 @@ function App() {
             </Button>
           </Form.Item>
         </Form>
-        <div style={{display:"flex"}}>
-        {requestPrint ? <Button onClick={() => printPreview(requestPrint)}> Print Request </Button> : null}
-        {pTouchPrint ? <Button onClick={() => printPreview(pTouchPrint)}> Print P-Touch Label </Button> : null}
-        {outPDFPrint ? <Button onClick={() => printPreview(outPDFPrint)}> Print Outbound Label </Button> : null}
-        {returnPDFPrint ? <Button onClick={() => printPreview(returnPDFPrint)}> Print Return Label </Button> : null}
+        <div style={{display:"flex", flexDirection:"column",justifyContent:"space-around", margin:"5rem", paddingBottom:"1rem", border: "3px dashed #3383FF", borderRadius:"10px"}}>
+          <h3>Files</h3>
+          <div style={{display:"flex", justifyContent: "space-around"}}>
+            {requestPrint ? <Button onClick={() => printPreview(requestPrint)}> Print Request </Button> : null}
+            {pTouchPrint ? <Button onClick={() => printPreview(pTouchPrint)}> Print P-Touch Label </Button> : null}
+            {outPDFPrint ? <Button onClick={() => printPreview(outPDFPrint)}> Print Outbound Label </Button> : null}
+            {returnPDFPrint ? <Button onClick={() => printPreview(returnPDFPrint)}> Print Return Label </Button> : null}
+          </div>
         </div>
     </div>
   );
