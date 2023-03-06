@@ -526,13 +526,13 @@ function App() {
                     </Form.Item>
                   </Col> 
                 </Row>
-                <Row justify={"center"}>
+                {/* <Row justify={"center"}>
                   <Form.Item>
                     <Button type="default" onClick={validateAddress}>
                       Validate
                     </Button>
                   </Form.Item>
-                </Row>
+                </Row> */}
                 <Row gutter={[10]} justify={"center"}>
                   <Col span={5}>
                     <Form.Item 
@@ -563,7 +563,7 @@ function App() {
                             handleFormChange({target:{value:v,id:"Service_Type"}})
                           }}
                         options={[
-                          {value:null, label: ''},
+                          {value: undefined, label: ''},
                           {value: 'FEDEX_2_DAY', label: "2 Day"},
                           {value: 'PRIORITY_OVERNIGHT', label: "Priority Overnight"}
                         ]}
@@ -710,8 +710,3 @@ function App() {
 }
 
 export default App;
-
-{/* <iframe title="request" id="pdf" style={{width: "100%", height: "100%"}} src={requestPrint}/>
-<iframe title="pTouch" id="pdf" style={{width: "100%", height: "100%"}} src={pTouchPrint}/>
-<iframe title="outbound" id="pdf" style={{width: "100%", height: "100%"}} src={outPDFPrint}/>
-<iframe title="return" id="pdf" style={{width: "100%", height: "100%"}} src={returnPDFPrint}/> */}
