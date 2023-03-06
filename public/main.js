@@ -9,6 +9,8 @@ const asyncRequest = require("request-promise")
 
 require('@electron/remote/main').initialize()
 
+
+
 function createWindow() {
     //create browser window
     const win = new BrowserWindow({
@@ -47,8 +49,8 @@ ipcMain.handle('get-fedex-auth', async (event, ...args) => {
     const authUrl = 'https://apis-sandbox.fedex.com/oauth/token';
     var details = {
         'grant_type': 'client_credentials',
-        'client_id': process.env.API_KEY,
-        'client_secret': process.env.SECRET_KEY
+        'client_id': apiInfo.API_KEY,
+        'client_secret': apiInfo.SECRET_KEY
         };
     userInfo = await axios.post(authUrl,details,{headers: {'content-type': 'application/x-www-form-urlencoded'}})
         .catch(err => {
@@ -127,7 +129,7 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
               'customerReferences': [
                 {
                   'customerReferenceType': "CUSTOMER_REFERENCE",
-                  'value': "640/"+ args[1].Shipment_Number + "/" + args[1].Stallion
+                  'value': args[1].Out_Cust_Ref
                 }
               ],
               'declaredValue': {
@@ -143,7 +145,7 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
         },
         'labelResponseOptions': "LABEL",
         'accountNumber': {
-          'value': process.env.SHIPPING_ACCOUNT
+          'value': apiInfo.SHIPPING_ACCOUNT
         },
         'shipAction': "CONFIRM",
       }
@@ -225,7 +227,7 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
               'customerReferences': [
                 {
                   'customerReferenceType': "CUSTOMER_REFERENCE",
-                  'value': "RET/640/"+ args[1].Shipment_Number + "/" + args[1].Stallion
+                  'value': args[1].Ret_Cust_Ref
                 }
               ],
               'weight': {
@@ -237,7 +239,7 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
         },
         'labelResponseOptions': "LABEL",
         'accountNumber': {
-          'value': process.env.SHIPPING_ACCOUNT
+          'value': apiInfo.SHIPPING_ACCOUNT
         },
         'shipAction': "CONFIRM",
       }

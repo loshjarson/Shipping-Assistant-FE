@@ -34,7 +34,9 @@ const initialFormState = {
   Billing_Address_3: null,
   Service_Type: null,
   Recipient_Email:null,
-  Recipient_Phone:null
+  Recipient_Phone:null,
+  Out_Cust_Ref:null,
+  Ret_Cust_Ref:null,
 }
 
 //initial state for shipping address
@@ -581,6 +583,38 @@ function App() {
                       <Input
                         id="Shipment_Number"
                         value={formState.Shipment_Number}
+                        onInput={handleFormChange}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row gutter={[10]} justify={"center"}>
+                  <Col>
+                    <Form.Item 
+                          label="Outbound Customer Reference"
+                          name="Outbound Customer Reference"
+                          rules={[{
+                            required: toCreateState.Shipping_Label,
+                            message: "Outbound customer reference is required"
+                        }]}>
+                          <Input
+                            id="Out_Cust_Ref"
+                            value={formState.Out_Cust_Ref}
+                            onInput={handleFormChange}
+                          />
+                    </Form.Item>
+                  </Col>
+                  <Col>
+                    <Form.Item 
+                      label="Return Customer Reference"
+                      name="Return Customer Reference"
+                      rules={[{
+                        required: toCreateState.Shipping_Label,
+                        message: "Return customer reference is required"
+                    }]}>
+                      <Input
+                        id="Ret_Cust_Ref"
+                        value={formState.Ret_Cust_Ref}
                         onInput={handleFormChange}
                       />
                     </Form.Item>
