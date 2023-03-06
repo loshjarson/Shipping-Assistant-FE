@@ -243,11 +243,11 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
       }
     const outboundLabelRes = await axios.post(shippingUrl,fedexOutBody,{headers: {'authorization':'bearer ' + args[0]}})
       .catch(err => {
-        addressError = err.data.errors[0].message
+        addressError = err.response.data.errors[0].message
       })
     const returnLabelRes = await axios.post(shippingUrl,fedexRetBody,{headers: {'authorization':'bearer ' + args[0]}})
       .catch(err => {
-        addressError = err.request.data.errors[0].message
+        addressError = err.response.data.errors[0].message
       })
     if(addressError){
       return [{error:addressError}]

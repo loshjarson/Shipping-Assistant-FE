@@ -62,7 +62,7 @@ function App() {
   let bearer = null;
   let authTime = null;
   const [antForm] = useForm();
-  let labelError = null;
+  const [labelError, setLabelError] = useState(null);
 
   const [requestPrint, setRequestPrint] = useState(null);
   const [pTouchPrint, setPTouchPrint] = useState(null);
@@ -128,6 +128,7 @@ function App() {
 
   //handles submission events. pdf form filling, and shipment label request
   const onSubmit = async (event) => {
+    setLabelError(null)
      //if request chosen, fill request pdf
      if(toCreateState.Shipment_Request) {
         //selects request file and converts to array buffer for pdf-lib
@@ -231,8 +232,8 @@ function App() {
           bearer = authInfo.bearer;
         }
         const labels = await ipcRenderer.invoke('get-fedex-labels', bearer, formState, addressState)
-          if(labels.error) {
-            labelError = labels.error
+          if(labels[0].error) {
+            setLabelError(labels[0].error)
           }
 
           const outLabel = labels[0]
@@ -246,6 +247,9 @@ function App() {
      }
   }
 
+  const printPreview = async (url) => {
+    ipcRenderer.invoke("print-preview", url)
+  }
   return (
     <div className="App">
       <header className="App-header">
@@ -693,13 +697,18 @@ function App() {
           </Form.Item>
         </Form>
         <div style={{display:"flex"}}>
-        {requestPrint ? <iframe title="request" id="pdf" style={{width: "100%", height: "100%"}} src={requestPrint}/> : null}
-        {pTouchPrint ? <iframe title="pTouch" id="pdf" style={{width: "100%", height: "100%"}} src={pTouchPrint}/> : null}
-        {outPDFPrint ? <iframe title="outbound" id="pdf" style={{width: "100%", height: "100%"}} src={outPDFPrint}/> : null}
-        {returnPDFPrint ? <iframe title="return" id="pdf" style={{width: "100%", height: "100%"}} src={returnPDFPrint}/> : null}
+        {requestPrint ? <Button onClick={() => printPreview(requestPrint)}> Print Request </Button> : null}
+        {pTouchPrint ? <Button onClick={() => printPreview(pTouchPrint)}> Print P-Touch Label </Button> : null}
+        {outPDFPrint ? <Button onClick={() => printPreview(outPDFPrint)}> Print Outbound Label </Button> : null}
+        {returnPDFPrint ? <Button onClick={() => printPreview(returnPDFPrint)}> Print Return Label </Button> : null}
         </div>
     </div>
   );
 }
 
 export default App;
+
+{/* <iframe title="request" id="pdf" style={{width: "100%", height: "100%"}} src={requestPrint}/>
+<iframe title="pTouch" id="pdf" style={{width: "100%", height: "100%"}} src={pTouchPrint}/>
+<iframe title="outbound" id="pdf" style={{width: "100%", height: "100%"}} src={outPDFPrint}/>
+<iframe title="return" id="pdf" style={{width: "100%", height: "100%"}} src={returnPDFPrint}/> */}
