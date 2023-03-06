@@ -1,10 +1,8 @@
 import './App.css';
 import { useState } from 'react';
-import { PDFDocument, StandardFonts } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf';
 import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
-import CompPdf from './Assets/Company_Or_Recipient_Label.pdf';
-import printJS from 'print-js';
 import { Input, Checkbox, Form, Col, Row, Select, Button, DatePicker, Alert } from 'antd'
 import { useForm } from 'antd/es/form/Form';
 
@@ -58,7 +56,6 @@ const ToCreateInitialState = {
 
 
 function App() {
-  console.log(__dirname)
   const [formState, setFormState] = useState(initialFormState);
   const [addressState, setAddress] = useState(addressInitialState);
   const [toCreateState, setToCreateState] = useState(ToCreateInitialState);
@@ -74,7 +71,6 @@ function App() {
 
   //handles changes made to normal form inputs
   const handleFormChange = (event) => {
-    console.log(event)
     if(event.$L) {
       let updatedForm = {...formState};
       updatedForm.Shipping_Date = event;
@@ -120,9 +116,7 @@ function App() {
       Zip_Code: addressState.Zip_Code,
       City: addressState.City
     }
-    console.log(toValidate)
     const res = await ipcRenderer.invoke("validate-address", bearer, toValidate)
-    console.log(res)
     const validatedAddress = {
       Street_Address: res.output.resolvedAddresses[0].streetLinesToken[0],
       City: res.output.resolvedAddresses[0].city,
@@ -130,12 +124,10 @@ function App() {
       Zip_Code: res.output.resolvedAddresses[0].parsedPostalCode.addOn ? res.output.resolvedAdresses[0].parsedPostalCode.base + "-" + res.output.resolvedAdresses[0].parsedPostalCode.addOn : res.output.resolvedAdresses[0].parsedPostalCode.base,
     }
     setAddress(...addressState, ...validatedAddress)
-    console.log("validated")
   }
 
   //handles submission events. pdf form filling, and shipment label request
   const onSubmit = async (event) => {
-    console.log("submitting")
      //if request chosen, fill request pdf
      if(toCreateState.Shipment_Request) {
         //selects request file and converts to array buffer for pdf-lib
@@ -154,7 +146,6 @@ function App() {
                 checkbox.check()
               }
             } else{
-              console.log(input)
               const field = form.getTextField(input);
               if(input === "Shipping_Date" && formState[input]) {
                 field.setText(formState[input].format('MM/DD/YYYY'))
@@ -174,12 +165,12 @@ function App() {
         //formats address inputs and adds to form
         if(addressState.Attn){
           recipient.setText(addressState.Recipient + " Attn: " + addressState.Attn);
-          address1.setText(addressState.Street_Address);
-          address2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
+          address1.setText(addressState.Street_Address ? addressState.Street_Address : "");
+          address2.setText( addressState.City && addressState.State && addressState.Zip_Code ? addressState.City + ", " + addressState.State + " " + addressState.Zip_Code : "");
         } else {
-          recipient.setText(addressState.Recipient);
-          address1.setText(addressState.Street_Address);
-          address2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
+          recipient.setText(addressState.Recipient ? addressState.Recipient : "");
+          address1.setText(addressState.Street_Address ? addressState.Street_Address : "");
+          address2.setText( addressState.City && addressState.State && addressState.Zip_Code ? addressState.City + ", " + addressState.State + " " + addressState.Zip_Code : "");
         }
 
         const requestPDFBytes = await pdfDoc.saveAsBase64({ dataUri: true })
@@ -201,11 +192,11 @@ function App() {
         const phoneNumber = form.getTextField("Phone_Number");
 
         //fill all fields
-        companyName.setText(addressState.Recipient);
-        recipientName.setText(addressState.Attn);
-        addressLine1.setText(addressState.Street_Address);
-        addressLine2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code);
-        phoneNumber.setText(formState.Recipient_Phone);
+        addressState.Recipient ? companyName.setText(addressState.Recipient) : console.log("");
+        addressState.Attn ? recipientName.setText(addressState.Attn) : console.log("");
+        addressState.Street_Address ? addressLine1.setText(addressState.Street_Address) : console.log("");
+        addressState.City && addressState.State && addressState.Zip_Code ? addressLine2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code) : console.log("");
+        formState.Recipient_Phone ? phoneNumber.setText(formState.Recipient_Phone) : console.log("");
 
         const pTouchPDFBytes = await pdfDoc.saveAsBase64({ dataUri: true })
         setPTouchPrint(pTouchPDFBytes)
@@ -225,7 +216,6 @@ function App() {
         addressLine1.setText(addressState.Street_Address ? addressState.Street_Address : "");
         addressLine2.setText((addressState.City&&addressState.State&&addressState.Zip_Code) ? addressState.City + ", " + addressState.State + " " + addressState.Zip_Code : "");
         phoneNumber.setText(formState.Recipient_Phone ? formState.Recipient_Phone : "");
-        console.log(pdfDoc)
         const pTouchPDFBytes = await pdfDoc.saveAsBase64({ dataUri: true })
         setPTouchPrint(pTouchPDFBytes)
       
@@ -364,6 +354,7 @@ function App() {
                             handleFormChange({target:{value:v,id:"Current_Status"}})
                           }}
                         options={[
+                          {value: undefined, label: ''},
                           {value: 'Maiden', label: "Maiden"},
                           {value: 'Foaled', label: "Foaled"},
                           {value: 'Barren', label: "Barren"},
@@ -568,6 +559,7 @@ function App() {
                             handleFormChange({target:{value:v,id:"Service_Type"}})
                           }}
                         options={[
+                          {value:null, label: ''},
                           {value: 'FEDEX_2_DAY', label: "2 Day"},
                           {value: 'PRIORITY_OVERNIGHT', label: "Priority Overnight"}
                         ]}
