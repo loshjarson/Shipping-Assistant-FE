@@ -49,6 +49,13 @@ const addressInitialState = {
   Zip_Code: null,
 }
 
+const validatedAddressInitialState = {
+  Street_Address: null,
+  City: null,
+  State: null,
+  Zip_Code: null,
+}
+
 //initial state for forms the user wants to create
 const ToCreateInitialState = {
   Shipment_Request: true,
@@ -61,6 +68,7 @@ function App() {
   const [formState, setFormState] = useState(initialFormState);
   const [addressState, setAddress] = useState(addressInitialState);
   const [toCreateState, setToCreateState] = useState(ToCreateInitialState);
+  const [validatedAddress, setValidatedAddress] = useState(validatedAddressInitialState)
   let bearer = null;
   let authTime = null;
   const [antForm] = useForm();
@@ -125,13 +133,7 @@ function App() {
       City: addressState.City
     }
     const res = await ipcRenderer.invoke("validate-address", bearer, toValidate)
-    const validatedAddress = {
-      Street_Address: res.output.resolvedAddresses[0].streetLinesToken[0],
-      City: res.output.resolvedAddresses[0].city,
-      State: res.output.resolvedAddresses[0].stateOrProvinceCode,
-      Zip_Code: res.output.resolvedAddresses[0].parsedPostalCode.addOn ? res.output.resolvedAdresses[0].parsedPostalCode.base + "-" + res.output.resolvedAdresses[0].parsedPostalCode.addOn : res.output.resolvedAdresses[0].parsedPostalCode.base,
-    }
-    setAddress(...addressState, ...validatedAddress)
+    setValidatedAddress(res)
   }
 
   //handles submission events. pdf form filling, and shipment label request

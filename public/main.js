@@ -59,6 +59,35 @@ ipcMain.handle('get-fedex-auth', async (event, ...args) => {
     return {bearer:userInfo.data.access_token}
 })
 
+ipcMain.handle('validate-address', async(event, ...args) => {
+  const validateUrl = 'https://developer.fedex.com/api/en-us/catalog/address-validation/v1/address/v1/addresses/resolve'
+  const toValidate = {
+    'addressesToValidate':[
+      {
+        'address':{
+          'streetLines':[
+            args[1].Street_Address
+          ],
+          'city': args[1].City.toUpperCase(),
+          'stateOrProvinceCode': args[1].State.toUpperCase(),
+          'postalCode': args[1].Zip_Code,
+          'countryCode': 'US'
+        }
+      }
+    ]
+  }
+  const validationRes = await axios.post(validateUrl, toValidate, {headers: {'authorization': `bearer ${args[0]}`}}).catch(err => console.log(err))
+  const error = validationRes.data.output.alerts[0]
+  const resolvedAddress = validationRes.data.output.resolvedAddresses[0]
+  const newAddress = {
+    Street_Address: resolvedAddress.streetLinesToken[0],
+    City: resolvedAddress.city,
+    State: resolvedAddress.State,
+    Zip_Code: resolvedAddress.parsedPostalCode.addOn ? resolvedAddress.parsedPostalCode.base + "-" + resolvedAddress.parsedPostalCode.addOn : resolvedAddress.parsedPostalCode.base,
+  }
+  return newAddress
+})
+
 ipcMain.handle('get-fedex-labels', async (event, ...args) => {
     let addressError = null;
     const shippingUrl = 'https://apis-sandbox.fedex.com/ship/v1/shipments';
