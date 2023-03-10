@@ -98,6 +98,7 @@ function App() {
     setToCreateState({...update});
   }
 
+  //clears fields and resets values for faster reusability
   const resetForm = () => {
     setFormState({...initialFormState});
     setAddress({...addressInitialState});
@@ -109,6 +110,7 @@ function App() {
     antForm.resetFields();
   }
 
+  //validate address through fedex api
   const validateAddress = async () => {
     const now = Date.now()
     if(!bearer || (now-authTime)/1000 > 3599){
