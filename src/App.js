@@ -102,6 +102,10 @@ function App() {
     setFormState({...initialFormState});
     setAddress({...addressInitialState});
     setToCreateState({...ToCreateInitialState});
+    setRequestPrint(null);
+    setPTouchPrint(null);
+    setOutPDFPrint(null);
+    setReturnPDFPrint(null);
     antForm.resetFields();
   }
 
@@ -646,6 +650,7 @@ function App() {
                             handleFormChange({target:{value:v,id:"Card_Type"}})
                           }}
                         options={[
+                          {value: undefined, label: ''},
                           {value: 'Visa', label: "Visa"},
                           {value: 'MC', label: "MasterCard"}
                         ]}
