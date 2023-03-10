@@ -1,7 +1,7 @@
 const { BrowserWindow, app, ipcMain } = require("electron");
 const axios = require("axios");
 const moment = require("moment");
-require('dotenv').config();
+require('dotenv').config({path: __dirname + '/.env'})
 const path = require("path")
 const isDev = require('electron-is-dev')
 const asyncRequest = require("request-promise")
@@ -49,8 +49,8 @@ ipcMain.handle('get-fedex-auth', async (event, ...args) => {
     const authUrl = 'https://apis-sandbox.fedex.com/oauth/token';
     var details = {
         'grant_type': 'client_credentials',
-        'client_id': apiInfo.API_KEY,
-        'client_secret': apiInfo.SECRET_KEY
+        'client_id': process.env.API_KEY,
+        'client_secret': process.env.SECRET_KEY
         };
     userInfo = await axios.post(authUrl,details,{headers: {'content-type': 'application/x-www-form-urlencoded'}})
         .catch(err => {
@@ -145,7 +145,7 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
         },
         'labelResponseOptions': "LABEL",
         'accountNumber': {
-          'value': apiInfo.SHIPPING_ACCOUNT
+          'value': process.env.SHIPPING_ACCOUNT
         },
         'shipAction': "CONFIRM",
       }
@@ -239,7 +239,7 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
         },
         'labelResponseOptions': "LABEL",
         'accountNumber': {
-          'value': apiInfo.SHIPPING_ACCOUNT
+          'value': process.env.SHIPPING_ACCOUNT
         },
         'shipAction': "CONFIRM",
       }
