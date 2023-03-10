@@ -145,7 +145,7 @@ function App() {
         const form = pdfDoc.getForm();
         //sets text field to be value of form inputs
         Object.keys(formState).forEach(input => {
-          if (formState[input]){
+          if (formState[input] && input !== "Out_Cust_Ref"&& input !== "Ret_Cust_Ref"){
             if (input === "Service_Type"){
               const checkbox = form.getCheckBox(formState[input])
               checkbox.check()
