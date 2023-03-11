@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf';
 import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
-import { Input, Checkbox, Form, Col, Row, Select, Button, DatePicker, Alert } from 'antd'
+import { Input, Checkbox, Form, Col, Row, Select, Button, DatePicker, Alert, Modal } from 'antd'
 import { useForm } from 'antd/es/form/Form';
 
 //ipc renderer allows to send requests to electron main file
@@ -69,6 +69,7 @@ function App() {
   const [addressState, setAddress] = useState(addressInitialState);
   const [toCreateState, setToCreateState] = useState(ToCreateInitialState);
   const [validatedAddress, setValidatedAddress] = useState(validatedAddressInitialState)
+  const [isModalOpen, setIsModalOpen] = useState(false);
   let bearer = null;
   let authTime = null;
   const [antForm] = useForm();
@@ -106,6 +107,16 @@ function App() {
     setToCreateState({...update});
   }
 
+  const handleOk = () => {
+    setIsModalOpen(false)
+    setAddress(...validatedAddress)
+  }
+
+  const handleCancel = () => {
+    setIsModalOpen(false)
+  }
+
+
   //clears fields and resets values for faster reusability
   const resetForm = () => {
     setFormState({...initialFormState});
@@ -132,8 +143,10 @@ function App() {
       Zip_Code: addressState.Zip_Code,
       City: addressState.City
     }
+    
     const res = await ipcRenderer.invoke("validate-address", bearer, toValidate)
     setValidatedAddress(res)
+    setIsModalOpen(true);
   }
 
   //handles submission events. pdf form filling, and shipment label request
@@ -743,6 +756,28 @@ function App() {
             </Button>
           </Form.Item>
         </Form>
+        <Modal title="Validated Address" open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
+          <div style={{display:'flex'}}>
+            <div>
+              <h4>Entered Address</h4>
+              <div>
+                <p>Street_Address: {addressState.Street_Address}</p>
+                <p>City: {addressState.City}</p>
+                <p>State: {addressState.State}</p>
+                <p>Zip_Code: {addressState.Zip_Code}</p>
+              </div>
+            </div>
+            <div>
+              <h4>Validated Address</h4>
+              <div>
+                <p>Street_Address: {validatedAddress.Street_Address}</p>
+                <p>City: {validatedAddress.City}</p>
+                <p>State: {validatedAddress.State}</p>
+                <p>Zip_Code: {validatedAddress.Zip_Code}</p>
+              </div>
+            </div>
+          </div>
+        </Modal>
         <div style={{display:"flex", flexDirection:"column",justifyContent:"space-around", margin:"5rem", paddingBottom:"1rem", border: "3px dashed #3383FF", borderRadius:"10px"}}>
           <h3>Files</h3>
           <div style={{display:"flex", justifyContent: "space-around"}}>
