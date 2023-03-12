@@ -1,9 +1,10 @@
 import './App.css';
 import { useState } from 'react';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, StandardFonts } from 'pdf-lib';
 import requestPDF from './Assets/Frozen_Shipment_Request_Form_2023.pdf';
 import CompAttnPdf from './Assets/Company_And_Recipient_Label.pdf';
-import { Input, Checkbox, Form, Col, Row, Select, Button, DatePicker, Alert, Modal } from 'antd'
+import RecPdf from './Assets/Company_Or_Recipient_Label.pdf';
+import { Input, Checkbox, Form, Col, Row, Select, Button, DatePicker, Alert } from 'antd'
 import { useForm } from 'antd/es/form/Form';
 
 //ipc renderer allows to send requests to electron main file
@@ -68,8 +69,6 @@ function App() {
   const [formState, setFormState] = useState(initialFormState);
   const [addressState, setAddress] = useState(addressInitialState);
   const [toCreateState, setToCreateState] = useState(ToCreateInitialState);
-  const [validatedAddress, setValidatedAddress] = useState(validatedAddressInitialState)
-  const [isModalOpen, setIsModalOpen] = useState(false);
   let bearer = null;
   let authTime = null;
   const [antForm] = useForm();
@@ -107,16 +106,6 @@ function App() {
     setToCreateState({...update});
   }
 
-  const handleOk = () => {
-    setIsModalOpen(false)
-    setAddress(...validatedAddress)
-  }
-
-  const handleCancel = () => {
-    setIsModalOpen(false)
-  }
-
-
   //clears fields and resets values for faster reusability
   const resetForm = () => {
     setFormState({...initialFormState});
@@ -127,26 +116,6 @@ function App() {
     setOutPDFPrint(null);
     setReturnPDFPrint(null);
     antForm.resetFields();
-  }
-
-  //validate address through fedex api
-  const validateAddress = async () => {
-    const now = Date.now()
-    if(!bearer || (now-authTime)/1000 > 3599){
-      const authInfo = await ipcRenderer.invoke('get-fedex-auth')
-      authTime = Date.now()
-      bearer = authInfo.bearer;
-    }
-    const toValidate = {
-      State: addressState.State,
-      Street_Address: addressState.Street_Address,
-      Zip_Code: addressState.Zip_Code,
-      City: addressState.City
-    }
-    
-    const res = await ipcRenderer.invoke("validate-address", bearer, toValidate)
-    setValidatedAddress(res)
-    setIsModalOpen(true);
   }
 
   //handles submission events. pdf form filling, and shipment label request
@@ -203,9 +172,11 @@ function App() {
      } 
      //if ptouch chosen, check if there is attn. and fill pdf
      if(toCreateState.PTouch_Label){
+      //need to embed font to use it
       if(addressState.Attn){
         const arrayBuffer = await fetch(CompAttnPdf).then(res => res.arrayBuffer());
         const pdfDoc = await PDFDocument.load(arrayBuffer);
+        const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
         const form = pdfDoc.getForm();
         
         //select all fields
@@ -216,30 +187,37 @@ function App() {
         const phoneNumber = form.getTextField("Phone_Number");
 
         //fill all fields
-        addressState.Recipient ? companyName.setText(addressState.Recipient) : console.log("");
-        addressState.Attn ? recipientName.setText(addressState.Attn) : console.log("");
-        addressState.Street_Address ? addressLine1.setText(addressState.Street_Address) : console.log("");
-        addressState.City && addressState.State && addressState.Zip_Code ? addressLine2.setText(addressState.City + ", " + addressState.State + " " + addressState.Zip_Code) : console.log("");
-        formState.Recipient_Phone ? phoneNumber.setText(formState.Recipient_Phone) : console.log("");
+        companyName.setText(addressState.Recipient ? addressState.Recipient : "");
+        recipientName.setText(addressState.Attn ? addressState.Attn : "");
+        addressLine1.setText(addressState.Street_Address ? addressState.Street_Address : "");
+        addressLine2.setText(addressState.City && addressState.State && addressState.Zip_Code ? addressState.City + ", " + addressState.State + " " + addressState.Zip_Code : "");
+        phoneNumber.setText(formState.Recipient_Phone ? formState.Recipient_Phone : "");
+
+        companyName.updateAppearances(boldFont)
+        recipientName.updateAppearances(boldFont)
 
         const pTouchPDFBytes = await pdfDoc.saveAsBase64({ dataUri: true })
         setPTouchPrint(pTouchPDFBytes)
       } else {
-        const arrayBuffer = await fetch(CompAttnPdf).then(res => res.arrayBuffer())
+        const arrayBuffer = await fetch(RecPdf).then(res => res.arrayBuffer())
         const pdfDoc = await PDFDocument.load(arrayBuffer);
+        const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
         const form = pdfDoc.getForm();
         
         //select all fields
-        const recipientName = form.getTextField("Company_Name");
-        const addressLine1 = form.getTextField("Recipient_Name");
-        const addressLine2 = form.getTextField("Address_Line_1");
-        const phoneNumber = form.getTextField("Address_Line_2");
+        const recipientName = form.getTextField("Recipient_Name");
+        const addressLine1 = form.getTextField("Address_Line_1");
+        const addressLine2 = form.getTextField("Address_Line_2");
+        const phoneNumber = form.getTextField("Phone_Number");
 
         //fill all fields
         recipientName.setText(addressState.Recipient ? addressState.Recipient: "");
         addressLine1.setText(addressState.Street_Address ? addressState.Street_Address : "");
         addressLine2.setText((addressState.City&&addressState.State&&addressState.Zip_Code) ? addressState.City + ", " + addressState.State + " " + addressState.Zip_Code : "");
         phoneNumber.setText(formState.Recipient_Phone ? formState.Recipient_Phone : "");
+
+        recipientName.updateAppearances(boldFont)
+
         const pTouchPDFBytes = await pdfDoc.saveAsBase64({ dataUri: true })
         setPTouchPrint(pTouchPDFBytes)
       
@@ -553,13 +531,6 @@ function App() {
                     </Form.Item>
                   </Col> 
                 </Row>
-                {/* <Row justify={"center"}>
-                  <Form.Item>
-                    <Button type="default" onClick={validateAddress}>
-                      Validate
-                    </Button>
-                  </Form.Item>
-                </Row> */}
                 <Row gutter={[10]} justify={"center"}>
                   <Col span={5}>
                     <Form.Item 
@@ -756,28 +727,6 @@ function App() {
             </Button>
           </Form.Item>
         </Form>
-        <Modal title="Validated Address" open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
-          <div style={{display:'flex'}}>
-            <div>
-              <h4>Entered Address</h4>
-              <div>
-                <p>Street_Address: {addressState.Street_Address}</p>
-                <p>City: {addressState.City}</p>
-                <p>State: {addressState.State}</p>
-                <p>Zip_Code: {addressState.Zip_Code}</p>
-              </div>
-            </div>
-            <div>
-              <h4>Validated Address</h4>
-              <div>
-                <p>Street_Address: {validatedAddress.Street_Address}</p>
-                <p>City: {validatedAddress.City}</p>
-                <p>State: {validatedAddress.State}</p>
-                <p>Zip_Code: {validatedAddress.Zip_Code}</p>
-              </div>
-            </div>
-          </div>
-        </Modal>
         <div style={{display:"flex", flexDirection:"column",justifyContent:"space-around", margin:"5rem", paddingBottom:"1rem", border: "3px dashed #3383FF", borderRadius:"10px"}}>
           <h3>Files</h3>
           <div style={{display:"flex", justifyContent: "space-around"}}>
