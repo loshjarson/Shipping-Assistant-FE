@@ -258,8 +258,8 @@ function App() {
           const retpdfDoc = await PDFDocument.load(retLabel);
           const outMediaBox = outpdfDoc.getPage(0).getMediaBox()
           const retMediaBox = retpdfDoc.getPage(0).getMediaBox()
-          outpdfDoc.getPage(0).setCropBox(0,0,outMediaBox.width,outMediaBox.height - 5)
-          retpdfDoc.getPage(0).setCropBox(0,0,retMediaBox.width,retMediaBox.height - 5)
+          outpdfDoc.getPage(0).setCropBox(0,5,outMediaBox.width,outMediaBox.height)
+          retpdfDoc.getPage(0).setCropBox(0,5,retMediaBox.width,retMediaBox.height)
           const outPDFBytes = await outpdfDoc.saveAsBase64({ dataUri: true })
           const retPDFBytes = await retpdfDoc.saveAsBase64({ dataUri: true }) 
           setOutPDFPrint(outPDFBytes)
