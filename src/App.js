@@ -12,7 +12,7 @@ const ipcRenderer = window.require("electron").ipcRenderer;
 
 //initial for form inputs minus shipping address
 const initialFormState = {
-  Shipment_Number: null,
+  Transaction_Number: null,
   Mare_Owner: null,
   Mare_Phone: null,
   Mare_Email: null,
@@ -36,6 +36,7 @@ const initialFormState = {
   Service_Type: null,
   Recipient_Email:null,
   Recipient_Phone:null,
+  Shipment_Type:null,
   Out_Cust_Ref:null,
   Ret_Cust_Ref:null,
 }
@@ -116,6 +117,19 @@ function App() {
     setOutPDFPrint(null);
     setReturnPDFPrint(null);
     antForm.resetFields();
+  }
+
+  const setReferences = () => {
+    const form = {...formState}
+    if(formState.Shipment_Type === 6401){
+      setFormState({...form, Out_Cust_Ref:`6401/${formState.Transaction_Number}/${formState.Stallion}`, Ret_Cust_Ref:`RET/6401/${formState.Transaction_Number}/${formState.Stallion}`})
+    } else if(formState.Shipment_Type === 6402){
+      setFormState({...form, Out_Cust_Ref:`6402/${formState.Transaction_Number}/${formState.Stallion}`, Ret_Cust_Ref:`RET/6402/${formState.Transaction_Number}/${formState.Stallion}`})
+    } else if(formState.Shipment_Type === 6101){
+      setFormState({...form, Out_Cust_Ref:`6101/${formState.Stallion}${formState.Mare_Name ? `/${formState.Mare_Name}`: ""}`, Ret_Cust_Ref:`RET/6101/${formState.Stallion}${formState.Mare_Name ? `/${formState.Mare_Name}`: ""}`})
+    } else if(formState.Shipment_Type === 6105){
+      setFormState({...form, Out_Cust_Ref:`6105/${formState.Stallion}${formState.Mare_Name ? `/${formState.Mare_Name}`: ""}`, Ret_Cust_Ref:`RET/6105/${formState.Stallion}${formState.Mare_Name ? `/${formState.Mare_Name}`: ""}`})
+    }
   }
 
   //handles submission events. pdf form filling, and shipment label request
@@ -232,6 +246,7 @@ function App() {
           authTime = Date.now()
           bearer = authInfo.bearer;
         }
+        setReferences()
         const labels = await ipcRenderer.invoke('get-fedex-labels', bearer, formState, addressState)
           if(labels[0].error) {
             setLabelError(labels[0].error)
@@ -509,7 +524,7 @@ function App() {
                       name="Recipient Phone"
                       rules={[{
                       required: toCreateState.Shipping_Label,
-                      message: "Zip code is required"
+                      message: "Recipient phone is required"
                     }]}>
                       <Input
                         id="Recipient_Phone"
@@ -570,23 +585,36 @@ function App() {
                   </Col>
                   <Col span={8}>
                     <Form.Item 
-                      label="Shipment Number"
-                      name="Shipment Number"
-                      rules={[{
-                        required: toCreateState.Shipping_Label,
-                        message: "Shipment Number is required"
-                    }]}>
+                      label="Transaction Number"
+                      name="Transaction Number"
+                      >
                       <Input
-                        id="Shipment_Number"
-                        value={formState.Shipment_Number}
+                        id="Transaction_Number"
+                        value={formState.Transaction_Number}
                         onInput={handleFormChange}
                       />
                     </Form.Item>
                   </Col>
                 </Row>
-                <Row gutter={[10]} justify={"center"}>
-                  <Col>
-                    <Form.Item 
+                <Row justify={"center"}>
+                  <Col span={5}>
+                    <Form.Item label="Shipment Type:">
+                      <Select
+                        value={formState.Shipment_Type}
+                        id="Shipment_Type"
+                        onChange={(v) => {
+                            handleFormChange({target:{value:v,id:"Shipment_Type"}})
+                          }}
+                        options={[
+                          {value: undefined, label: ''},
+                          {value: '6401', label: "Frozen Equine"},
+                          {value: '6402', label: "Frozen Canine"},
+                          {value: '6101', label: "Cooled Equine"},
+                          {value: '6105', label: "Cooled Canine"}
+                        ]}
+                      />
+                    </Form.Item>
+                    {/* <Form.Item 
                           label="Outbound Customer Reference"
                           name="Outbound Customer Reference"
                           rules={[{
@@ -613,7 +641,7 @@ function App() {
                         value={formState.Ret_Cust_Ref}
                         onInput={handleFormChange}
                       />
-                    </Form.Item>
+                    </Form.Item> */}
                   </Col>
                 </Row>
               </div>
