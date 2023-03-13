@@ -149,9 +149,9 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
                 "docTabContentType": "STANDARD"
               }
             },
-            'labelStockType': "STOCK_4X675_TRAILING_DOC_TAB",
+            'labelStockType': "STOCK_4X675_LEADING_DOC_TAB",
             'imageType': "ZPLII",
-            'labelPrintingOrientation': "BOTTOM_EDGE_OF_TEXT_FIRST",
+            'labelPrintingOrientation': "TOP_EDGE_OF_TEXT_FIRST",
           },
           'requestedPackageLineItems': [
             {
@@ -247,9 +247,9 @@ ipcMain.handle('get-fedex-labels', async (event, ...args) => {
                 "docTabContentType": "STANDARD"
               }
             },
-            'labelStockType': "STOCK_4X675_TRAILING_DOC_TAB",
+            'labelStockType': "STOCK_4X675_LEADING_DOC_TAB",
             'imageType': "ZPLII",
-            'labelPrintingOrientation': "BOTTOM_EDGE_OF_TEXT_FIRST",
+            'labelPrintingOrientation': "TOP_EDGE_OF_TEXT_FIRST",
           },
           'requestedPackageLineItems': [
             {
